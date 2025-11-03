@@ -179,15 +179,25 @@ Remember: Your success is measured by the student discovering the answer themsel
 /**
  * Send message to Socratic math tutor and get response
  * @param {Array} conversationHistory - Array of {role, content} messages
+ * @param {number} stuckCount - Number of consecutive wrong answers (for hint progression)
  * @returns {Promise<{content: string, success: boolean, error?: string}>}
  */
-export async function getSocraticResponse(conversationHistory) {
+export async function getSocraticResponse(conversationHistory, stuckCount = 0) {
   try {
-    // Prepend system message with Socratic prompt
+    // PR-005: Add hint progression context based on stuck count
+    let systemPrompt = SOCRATIC_SYSTEM_PROMPT;
+
+    if (stuckCount >= 3) {
+      systemPrompt += `\n\n⚠️ HINT ESCALATION (Stuck Count: ${stuckCount}): Student has struggled with ${stuckCount} consecutive wrong answers. Provide MORE CONCRETE hints while still using questions. Example: Instead of "What operation might help?" try "What operation would undo multiplication by 2?"`;
+    } else if (stuckCount >= 2) {
+      systemPrompt += `\n\n⚠️ HINT PROGRESSION (Stuck Count: ${stuckCount}): Student has given ${stuckCount} wrong answers. Start providing more specific hints as questions.`;
+    }
+
+    // Prepend system message with Socratic prompt (enhanced with hint progression)
     const messages = [
       {
         role: 'system',
-        content: SOCRATIC_SYSTEM_PROMPT
+        content: systemPrompt
       },
       ...conversationHistory
     ];
