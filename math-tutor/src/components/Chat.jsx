@@ -23,13 +23,15 @@ export default function Chat() {
   const [showImageUpload, setShowImageUpload] = useState(true);
   const [lastError, setLastError] = useState(null);
   const [retryPayload, setRetryPayload] = useState(null);
-
-  // PR-005: Response evaluation and hint progression
-  const [stuckCount, setStuckCount] = useState(0);
-  const [currentProblem, setCurrentProblem] = useState(null);
-
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // TODO PR-005: Response evaluation and hint progression
+  // const [stuckCount, setStuckCount] = useState(0);
+
+  // TODO PR-006: Problem state tracking
+  // const [currentProblem, setCurrentProblem] = useState(null);
+  // const [problemStartIndex, setProblemStartIndex] = useState(null);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -44,6 +46,14 @@ export default function Chat() {
     // Clear previous errors
     setLastError(null);
     setRetryPayload(null);
+
+    // PR-006: Detect if this is a new problem
+    const isNewProblem = detectNewProblem(content);
+    if (isNewProblem) {
+      setCurrentProblem(content);
+      setProblemStartIndex(messages.length); // Index where this problem starts
+      setStuckCount(0); // Reset stuck count for new problem
+    }
 
     // Add user message
     const userMessage = {
@@ -110,16 +120,25 @@ export default function Chat() {
     const lowerResponse = tutorResponse.toLowerCase();
     const correctionPhrases = [
       'let\'s check',
+      'let\'s go back',
+      'let\'s take a step back',
       'not quite',
       'that\'s not',
+      'doesn\'t equal',
+      'doesn\'t match',
       'double-check',
       'try again',
       'hmm',
       'reconsider',
       'look again',
+      'look back',
       'careful',
       'actually',
-      'incorrect'
+      'incorrect',
+      'substitute it back',
+      'substitute that back',
+      'verify',
+      'still trying'
     ];
 
     return correctionPhrases.some(phrase => lowerResponse.includes(phrase));
@@ -143,6 +162,45 @@ export default function Chat() {
     ];
 
     return celebrationPhrases.some(phrase => lowerResponse.includes(phrase));
+  };
+
+  /**
+   * PR-006: Detect if user message is a new problem vs answer to current problem
+   * Heuristics: Contains equation symbols, operations, "solve", "find", etc.
+   */
+  const detectNewProblem = (userMessage) => {
+    const msg = userMessage.trim();
+
+    // Check for mathematical problem indicators first
+    const problemIndicators = [
+      /solve/i,
+      /find/i,
+      /what is/i,
+      /calculate/i,
+      /\d+\s*[+\-*/÷×]\s*\d+/, // arithmetic operations (3 + 7)
+      /\d+[a-z]\s*[+\-*/]\s*\d+\s*=/, // algebra with operations (2x + 5 = 13)
+      /[a-z]\s*[+\-*/]\s*\d+\s*=\s*\d+/, // algebra (x + 3 = 7)
+      /=.*\?/, // equation with question mark
+      /area|perimeter|volume/i, // geometry
+      /how many/i, // word problems
+      /\bif\b.*\bthen\b/i, // conditional problems
+    ];
+
+    const hasProblemPattern = problemIndicators.some(pattern => pattern.test(userMessage));
+
+    // If we found a problem pattern, it's a new problem
+    if (hasProblemPattern) {
+      return true;
+    }
+
+    // Otherwise, if it's very short and doesn't have problem keywords, it's likely just an answer
+    // Short answers like "x=5", "4", "yes", "subtract 5" should NOT be new problems
+    if (msg.length <= 6 && !/solve|find|what|calculate|area|perimeter|how many/i.test(msg)) {
+      return false;
+    }
+
+    // For mid-length messages without clear problem indicators, default to false
+    return false;
   };
 
   const getErrorDetails = (errorMessage) => {
@@ -203,6 +261,11 @@ export default function Chat() {
     // Clear previous errors
     setLastError(null);
     setRetryPayload(null);
+
+    // PR-006: Track new problem from image upload
+    setCurrentProblem(text);
+    setProblemStartIndex(messages.length); // Index where this problem starts
+    setStuckCount(0); // Reset stuck count for new problem
 
     // Add user message with the parsed problem
     const userMessage = {
@@ -265,6 +328,15 @@ export default function Chat() {
       <header className={styles.header}>
         <h1 className={styles.title}>AI Math Tutor</h1>
         <p className={styles.subtitle}>Socratic Learning Assistant</p>
+
+        {/* PR-006: Current problem indicator */}
+        {currentProblem && (
+          <div className={styles.currentProblem} role="status" aria-label="Current problem">
+            <span className={styles.problemLabel}>Current Problem:</span>{' '}
+            <span className={styles.problemText}>{currentProblem}</span>
+          </div>
+        )}
+
         {/* PR-005: Hint progression indicator */}
         {stuckCount >= 2 && (
           <div className={styles.hintStatus} role="status" aria-live="polite">
