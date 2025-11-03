@@ -530,9 +530,16 @@ This section is updated as decisions are made. Format:
 
 - **State Management** - When: PR-001 (Day 1) - Decision: React built-in (useState, useContext) - Rationale: Sufficient for MVP complexity. May add Zustand if needed later.
 
+### PR-007 Decisions (2025-11-03)
+
+- **Math Rendering Library** - When: PR-007 (Day 4) - Decision: KaTeX - Rationale: Faster than MathJax (~300KB vs ~1MB), synchronous rendering (no async complexity), better performance for interactive apps. Supports all standard LaTeX notation.
+
+- **LaTeX Parsing Strategy** - When: PR-007 (Day 4) - Decision: Custom parser splitting on `$` and `$$` delimiters - Rationale: Full control over parsing logic, easier debugging than complex regex, clear separation of text vs math content.
+
+- **Error Handling for LaTeX** - When: PR-007 (Day 4) - Decision: Graceful degradation with `throwOnError: false` - Rationale: Malformed LaTeX shows in red with error styling instead of breaking UI. Better UX than error boundaries.
+
 ### Future Decisions
 
-- **Math Rendering** - When: Day 4 (PR-007) - Decision: TBD - Rationale: TBD
 - **Deployment Platform** - When: Day 5 (PR-011) - Decision: TBD - Rationale: TBD
 - **Stretch Features** - When: Day 6-7 (PR-012+) - Decision: TBD - Rationale: TBD
 

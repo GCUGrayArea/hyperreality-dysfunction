@@ -13,7 +13,11 @@
 - **Styling**: CSS Modules
   - **Rationale**: Scoped styles, no extra dependencies, not Tailwind (per user constraint)
   - **Location**: `src/styles/` directory
-- **Math Rendering**: TBD (deferred to PR-007, likely KaTeX or MathJax)
+- **Math Rendering**: KaTeX (PR-007)
+  - **Version**: Latest (installed via `npm install katex`)
+  - **Rationale**: Faster than MathJax (~300KB vs ~1MB), synchronous rendering, better for interactive apps
+  - **Syntax**: Supports inline `$...$` and block `$$...$$` LaTeX delimiters
+  - **Location**: `src/utils/latexRenderer.js` (parsing/rendering), integrated in Message component
 - **State Management**: React built-in (useState, useContext) for now
   - **Note**: May add Zustand if complexity increases
 
@@ -117,20 +121,16 @@
 ## Dependencies
 
 ### Core Dependencies (from package.json)
-- `react@^18.3.1` - UI library
-- `react-dom@^18.3.1` - React DOM rendering
-- OpenAI SDK - TBD (will add in PR-002/PR-004 when integrating APIs)
+- `react@^19.1.1` - UI library
+- `react-dom@^19.1.1` - React DOM rendering
+- `openai@^6.7.0` - OpenAI API client (added in PR-002)
+- `katex@latest` - Math rendering library (added in PR-007)
 
 ### Dev Dependencies
-- `vite@^6.0.5` - Build tool and dev server
-- `@vitejs/plugin-react@^4.3.4` - Vite plugin for React
-- `eslint@^9.17.0` - Code linting
+- `vite@^7.1.7` - Build tool and dev server
+- `@vitejs/plugin-react@^5.0.4` - Vite plugin for React
+- `eslint@^9.36.0` - Code linting
 - Various ESLint plugins for React
-
-### To Be Added
-- OpenAI SDK (PR-002 or PR-004)
-- Math rendering library (PR-007): KaTeX or MathJax
-- Any additional utilities as needed
 
 ---
 
@@ -181,3 +181,15 @@ Update this file when:
 - **UI Integration**: Image upload shown initially, hidden after first problem submitted
 - **Error Handling**: Graceful fallbacks with user-friendly error messages
 - **OpenAI SDK**: Added openai package for vision and chat capabilities
+
+### PR-007 Decisions Made (2025-11-03)
+- **Math Rendering Library**: KaTeX (chosen over MathJax)
+  - **Rationale**: Faster rendering, smaller bundle (~300KB vs ~1MB), synchronous API
+- **LaTeX Syntax**: Inline `$...$` and block `$$...$$` delimiters
+  - **Note**: `\(...\)` and `\[...\]` not supported (can add if needed)
+- **Parsing Strategy**: Custom parser in `latexRenderer.js` that splits text into text/math parts
+  - **Rationale**: Full control over parsing, easier to debug than regex-only approach
+- **Error Handling**: Graceful degradation with `throwOnError: false`
+  - **Display**: Failed LaTeX shows in red with error styling, doesn't break UI
+- **Security**: `trust: false` in KaTeX config disables potentially dangerous commands like `\href`
+- **Integration Point**: Message component only (no changes to LLM integration needed)

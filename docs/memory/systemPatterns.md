@@ -277,12 +277,109 @@ UI update (auto-scroll)
 - Consider: smart truncation for very long conversations
 - Consider: conversation summarization for context compression
 
-### PR-007 (Math Rendering)
-- LaTeX already in responses from LLM
-- Need to parse and render $...$ and $$...$$ blocks
-- Won't require changes to LLM integration
-
 ### PR-008 (Error Handling)
 - Basic error handling already in place
 - Can enhance with more specific error types
 - Can add retry logic for transient failures
+
+---
+
+## PR-007 Patterns: Math Rendering Integration
+
+**Library Choice**: KaTeX (v0.16+)
+- **Rationale**: Faster than MathJax (~300KB vs ~1MB), no runtime typesetting, better for interactive apps
+- **Installation**: `npm install katex`
+- **CSS Import**: `import 'katex/dist/katex.min.css'` in Message component
+
+### LaTeX Parsing Pattern
+
+**Implementation**: `src/utils/latexRenderer.js`
+
+**Supported Syntax**:
+- Inline math: `$...$` (e.g., `$x^2 + 3x + 2$`)
+- Block math: `$$...$$` (e.g., `$$\frac{a}{b}$$`)
+
+**Parse Algorithm**:
+1. Search for block math (`$$...$$`) and inline math (`$...$`) markers
+2. Determine which comes first in remaining text
+3. Split text into parts: `{type: 'text'|'math', content: string, display: boolean}`
+4. Repeat until all text is processed
+
+**Rendering Function**:
+```javascript
+renderLatex(latex, displayMode) {
+  return katex.renderToString(latex, {
+    displayMode,      // true for block, false for inline
+    throwOnError: false,  // Show errors in output instead of throwing
+    errorColor: '#cc0000',
+    strict: false,    // Allow some non-standard LaTeX
+    trust: false,     // Security: disable \href, \url
+  });
+}
+```
+
+### Message Component Integration
+
+**Pattern**: Parse → Render → Display
+1. Parse content into text/math parts using `parseLatex(content)`
+2. Map over parts array
+3. Render text parts as `<span>` with `whiteSpace: 'pre-wrap'`
+4. Render math parts using `dangerouslySetInnerHTML` with KaTeX HTML output
+
+**Why dangerouslySetInnerHTML?**
+- KaTeX outputs sanitized HTML (safe from XSS)
+- React needs to render KaTeX's HTML structure
+- Alternative (mounting to DOM node) would be more complex
+
+**CSS Classes**:
+- `.mathInline` - inline equations with small horizontal margins
+- `.mathBlock` - block equations, centered, with vertical margins, horizontal scroll for overflow
+- `:global(.latex-error)` - error display for malformed LaTeX (red text, pink background, monospace)
+
+### Error Handling Pattern
+
+**Approach**: Graceful degradation
+- `throwOnError: false` in KaTeX config shows error in rendered output
+- Try-catch in renderLatex falls back to raw LaTeX with error styling
+- Console error logged for debugging
+- User sees red-highlighted LaTeX if rendering fails (not a broken UI)
+
+**Error Display**:
+```html
+<span class="latex-error" title="LaTeX rendering failed">x^{2</span>
+```
+
+### Integration with PR-004 (Socratic Dialogue)
+
+**No changes needed to LLM integration**:
+- GPT-4 already outputs LaTeX in responses
+- Rendering happens purely client-side in Message component
+- LLM dialogue flow unchanged
+
+**Testing Recommendation**:
+Ask tutor about equation like "2x + 5 = 13" and verify:
+- Equations render visually (not as `$...$` text)
+- Inline math appears within text flow
+- Block math appears centered on its own line
+- Complex notation (fractions, exponents) renders correctly
+
+### Performance Considerations
+
+**KaTeX rendering is synchronous and fast**:
+- Typical equation renders in <5ms
+- No noticeable lag in message display
+- No need for loading states or async rendering
+
+**Bundle size**:
+- KaTeX core: ~300KB minified
+- Fonts: ~100KB
+- Total impact: ~400KB added to bundle
+
+### Future Enhancements (Out of Scope for PR-007)
+
+**Not implemented** (can add in future PRs if needed):
+- LaTeX syntax highlighting in input field
+- LaTeX equation editor UI
+- Copy-rendered-equation functionality
+- Support for `\(...\)` and `\[...\]` delimiters (only `$` supported now)
+- Math rendering in image parsing (currently only in chat messages)
