@@ -122,6 +122,59 @@ None yet - no implementation started
   - math-tutor/src/styles/Message.module.css (responsive)
   - math-tutor/src/index.css (.sr-only utility)
 
+### PR-005: Response Evaluation and Hint Progression ✅ (2025-11-03)
+- **Status**: Complete
+- **Key Features**:
+  - Explicit stuck count state tracking
+  - detectWrongAnswer() with correction phrase patterns
+  - detectCorrectAnswer() with celebration phrase patterns
+  - Hint progression at stuckCount >= 2 (⚠️ HINT PROGRESSION)
+  - Concrete hint escalation at stuckCount >= 3 (⚠️ HINT ESCALATION)
+  - Visual "💡 Hint Level" indicator in header
+  - Stuck count resets on correct answers and new problems
+  - Integration with Socratic prompt (appends hint context to system message)
+- **Files Modified**:
+  - math-tutor/src/components/Chat.jsx (stuck count logic, detection functions)
+  - math-tutor/src/services/openai.js (stuckCount parameter, hint escalation)
+  - math-tutor/src/styles/Chat.module.css (hint status indicator styling)
+- **Validation**:
+  ✅ Hints escalate after 2 wrong answers
+  ✅ Visual indicator appears/disappears correctly
+  ✅ Stuck count resets on correct answers
+  ✅ More concrete hints provided at higher stuck counts
+
+### PR-006: Context Management - Problem State Tracking ✅ (2025-11-03)
+- **Status**: Complete
+- **Key Features**:
+  - Problem state tracking (currentProblem, problemStartIndex)
+  - detectNewProblem() with regex pattern matching:
+    - Arithmetic operations (3 + 7)
+    - Algebra expressions (2x + 5 = 13, x + 3 = 7)
+    - Word problem keywords (solve, find, calculate, area, perimeter, how many)
+    - Short-answer filter (≤6 chars without keywords = answer, not problem)
+  - Visual "Current Problem:" indicator in header
+  - Stuck count resets on new problem detection
+  - Enhanced detectWrongAnswer() with expanded correction patterns:
+    - Added: "let's go back", "let's take a step back", "doesn't equal"
+    - Added: "still trying", "substitute it back", "verify"
+  - Socratic prompt v1.6 enhancements:
+    - Acknowledges complete information instead of asking redundant questions
+    - Handles self-corrections (recognizes "typo", "oops", "I meant", "correction")
+    - Adapts approach based on context
+- **Files Modified**:
+  - math-tutor/src/components/Chat.jsx (problem detection, state tracking)
+  - math-tutor/src/services/openai.js (Socratic prompt v1.6)
+  - math-tutor/src/styles/Chat.module.css (current problem indicator styling)
+  - docs/PROMPTS.md (v1.6 iteration documented)
+- **Validation**:
+  ✅ "2x+5=13" detected as new problem
+  ✅ "x=5", "x=6", "x=7" NOT detected as new problems
+  ✅ Stuck count increments on wrong answers
+  ✅ Hint level indicator appears after 2 wrong answers
+  ✅ New problem resets stuck count and updates indicator
+  ✅ Acknowledges complete information naturally
+  ✅ Handles self-corrections appropriately
+
 ---
 
 ## In Progress PRs
