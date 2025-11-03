@@ -168,11 +168,18 @@ export default function Chat() {
   /**
    * PR-006: Detect if user message is a new problem vs answer to current problem
    * Heuristics: Contains equation symbols, operations, "solve", "find", etc.
+   * Bug Fix: Require minimum length to avoid detecting single-word answers as problems
    */
   const detectNewProblem = (userMessage) => {
     const msg = userMessage.trim();
 
-    // Check for mathematical problem indicators first
+    // BUG FIX: Short messages (≤10 chars) are very likely answers, not new problems
+    // This prevents "Area.", "x=4", "yes", etc. from being detected as problems
+    if (msg.length <= 10) {
+      return false;
+    }
+
+    // Check for mathematical problem indicators
     const problemIndicators = [
       /solve/i,
       /find/i,
@@ -189,18 +196,12 @@ export default function Chat() {
 
     const hasProblemPattern = problemIndicators.some(pattern => pattern.test(userMessage));
 
-    // If we found a problem pattern, it's a new problem
+    // If we found a problem pattern in a longer message, it's a new problem
     if (hasProblemPattern) {
       return true;
     }
 
-    // Otherwise, if it's very short and doesn't have problem keywords, it's likely just an answer
-    // Short answers like "x=5", "4", "yes", "subtract 5" should NOT be new problems
-    if (msg.length <= 6 && !/solve|find|what|calculate|area|perimeter|how many/i.test(msg)) {
-      return false;
-    }
-
-    // For mid-length messages without clear problem indicators, default to false
+    // For messages without clear problem indicators, default to false
     return false;
   };
 
