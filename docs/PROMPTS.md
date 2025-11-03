@@ -231,6 +231,28 @@ For PR-004 to pass the validation gate, the system must demonstrate:
 - **Result**: PASS - Actively discourages guessing, redirects to systematic method, maintains context
 - **Test Results**: Tests 1-3 all pass
 
+**v1.4** (2025-11-03, PR-004 - Iteration 4):
+- **Problem Found**: Test 4 (Word Problem) failure - LLM said "Excellent!" to 3 + 7 = 9 (correct: 10)
+- **Root Cause**: Rule 6 ("verify correctness") not specific enough; LLM prioritized Socratic flow over math accuracy
+- **Fix**: Added VERIFICATION PROTOCOL section:
+  - 6 explicit steps before responding
+  - Silently compute correct answer first
+  - Only celebrate if correct
+  - Never accept wrong math, even intermediate steps
+- **Result**: FAIL - Still said "Exactly!" to 3 + 7 = 9
+
+**v1.5** (2025-11-03, PR-004 - Iteration 5):
+- **Problem Found**: v1.4 VERIFICATION PROTOCOL ignored; LLM still celebrated wrong answers
+- **Root Cause**: Protocol buried below introduction; needed top placement + concrete examples
+- **Fix**: Maximum explicitness approach:
+  - ⚠️ MANDATORY VERIFICATION PROTOCOL moved to top (first thing LLM sees)
+  - Added anti-examples with exact failure case: ❌ "3 + 7 = 9" → "Exactly!" is WRONG
+  - Added positive examples: ✅ What to do instead
+  - Added rules 9-10: Never say "Exactly!" to wrong answers
+  - Used warning emoji for visual emphasis
+- **Result**: PASS - Catches math errors, no false celebration, proper verification
+- **Test Results**: All tests pass (Tests 1-4)
+
 ---
 
 **Model**: GPT-4o

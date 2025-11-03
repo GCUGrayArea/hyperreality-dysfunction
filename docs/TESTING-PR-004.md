@@ -145,14 +145,17 @@ After testing, document results in this file:
 
 **Date**: 2025-11-03
 **Tester**: User + Claude Code
-**Prompt Version**: v1.3 (after 3 iterations)
+**Prompt Version**: v1.5 (after 5 iterations)
 
 **Test 1 (Basic Algebra)**: ☑ PASS ☐ FAIL
 **Test 2 (Wrong Answers)**: ☑ PASS ☐ FAIL
 **Test 3 (Multi-Turn)**: ☑ PASS ☐ FAIL (after iteration)
-**Test 4 (Problem Types)**: ☐ PASS ☐ FAIL (pending)
+**Test 4 (Problem Types)**: ☑ PASS ☐ FAIL (after iteration)
+  - Fractions (1/3 + 1/4): ☑ PASS
+  - Word Problem (Sarah's apples): ☑ PASS (after iteration)
+  - Geometry (rectangle area): ☑ PASS
 
-**Overall Validation**: ☐ PASS ☐ FAIL (pending Test 4)
+**Overall Validation**: ☑ PASS ☐ FAIL
 
 **Notes**:
 ```
@@ -163,6 +166,10 @@ Test 3: Initially FAILED - LLM said "getting warmer" when student went
         from x=4.5 to x=2 (actually moving further from correct x=4).
         After 3 prompt iterations (v1.1, v1.2, v1.3), now PASSES.
         Final version discourages guessing and maintains context properly.
+Test 4: Fractions PASS immediately. Word problem and geometry initially
+        FAILED - LLM said "Exactly!" to 3 + 7 = 9 (correct: 10).
+        After 2 more iterations (v1.4, v1.5) focusing on mathematical
+        verification, now PASSES. No longer gives false praise to wrong math.
 ```
 
 **Issues Found**:
@@ -170,12 +177,14 @@ Test 3: Initially FAILED - LLM said "getting warmer" when student went
 v1.0: Used comparative feedback without mathematical verification
 v1.1: Still used "you're getting closer" despite added rules
 v1.2: Minor - acknowledged "trying different values"
-v1.3: RESOLVED - All issues addressed
+v1.3: RESOLVED comparative feedback issues (Tests 1-3 pass)
+v1.4: New issue - celebrated wrong math (3+7=9)
+v1.5: RESOLVED - All issues addressed, all tests pass
 ```
 
 **Recommendation**:
-☐ Proceed to next PRs (pending Test 4 completion)
-☑ Iterate on prompt (COMPLETED - 3 iterations successful)
+☑ Proceed to next PRs
+☑ Iterate on prompt (COMPLETED - 5 iterations successful)
 ☐ Try different LLM provider
 
 ---
