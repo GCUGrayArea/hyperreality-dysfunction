@@ -172,3 +172,12 @@ Update this file when:
 - Limitations discovered (add to Known Limitations section)
 - Performance characteristics observed
 - Architecture decisions made
+
+### PR-002 Decisions Made (2025-11-03)
+- **Image Upload**: Drag-drop + click-to-upload using native HTML5 File API
+- **File Validation**: Client-side validation for type (PNG/JPG/WEBP/GIF) and size (20MB max)
+- **Image Parsing**: OpenAI GPT-4 Vision (model: gpt-4o) with prompt optimized for math text extraction
+- **Base64 Encoding**: Using FileReader API to convert images to base64 for OpenAI API
+- **UI Integration**: Image upload shown initially, hidden after first problem submitted
+- **Error Handling**: Graceful fallbacks with user-friendly error messages
+- **OpenAI SDK**: Added openai package for vision and chat capabilities

@@ -181,3 +181,30 @@ None yet
 - Update when significant progress made
 - Update when blockers encountered
 - This file auto-commits (coordination file)
+
+## PR-002 Complete (2025-11-03)
+
+### What Works ✅
+- **Image Upload**: Drag-drop and click-to-upload functional
+- **File Validation**: Type and size validation working
+- **OpenAI Integration**: Successfully parsing images with GPT-4 Vision
+- **Base64 Conversion**: FileReader converting images correctly
+- **Parsed Text Display**: Extracted text shown to user
+- **Chat Integration**: Parsed problems flow into chat conversation
+- **Error Handling**: Validation errors and API errors displayed properly
+
+### Files Created/Modified
+- `src/services/openai.js` - OpenAI service module
+- `src/components/ImageUpload.jsx` - Image upload component
+- `src/styles/ImageUpload.module.css` - Image upload styles
+- `src/components/Chat.jsx` - Integrated ImageUpload
+- `src/styles/Chat.module.css` - Added upload section styles
+- `package.json` - Added openai dependency
+
+### Technical Decisions
+- Using GPT-4o model for vision (latest, more capable)
+- Base64 encoding for image data
+- Client-side API calls (no backend proxy yet)
+- Hide upload UI after first problem submitted
+- Validation before API call to save costs
+

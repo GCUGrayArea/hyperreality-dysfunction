@@ -116,3 +116,34 @@ This file will be updated by implementing agents as architectural patterns emerg
 - How image parsing integrates with chat
 - How math rendering is triggered
 - Error handling strategies
+
+## PR-002 Patterns: Image Upload and Parsing
+
+### Image Upload Flow
+1. User drags/drops or clicks to upload image
+2. Client-side validation (file type, size)
+3. Convert to base64 using FileReader
+4. Send to OpenAI GPT-4 Vision API
+5. Extract math problem text from image
+6. Display parsed text to user for confirmation
+7. Add parsed problem to chat conversation
+
+### Component Integration Pattern
+- **ImageUpload** component handles upload + parsing independently
+- Exposes `onParsedText` callback for integration
+- **Chat** component conditionally shows ImageUpload initially
+- Hides upload UI after first problem submitted
+- Parsed text flows into existing message state
+
+### Error Handling Pattern
+- Validate early (file type/size before API call)
+- Try/catch around API calls
+- User-friendly error messages displayed inline
+- Graceful degradation (upload UI resets on error)
+
+### File Organization
+- `src/services/openai.js` - API integration, reusable functions
+- `src/components/ImageUpload.jsx` - Upload UI + parsing logic
+- `src/styles/ImageUpload.module.css` - Scoped styles
+- CSS Modules pattern maintained throughout
+
