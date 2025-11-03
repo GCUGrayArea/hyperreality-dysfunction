@@ -28,11 +28,25 @@
 - Enhanced loading states and error UI
 - Print styles added
 
+**PR-005 COMPLETED ✅** (2025-11-03):
+- Response evaluation with stuck count tracking
+- Hint progression system (escalates after 2+ wrong answers)
+- Visual hint level indicator
+- detectWrongAnswer() and detectCorrectAnswer() functions
+- Integration with Socratic prompt for hint escalation
+
+**PR-006 COMPLETED ✅** (2025-11-03):
+- Problem state tracking with currentProblem and problemStartIndex
+- detectNewProblem() function with regex patterns
+- Visual "Current Problem:" indicator in header
+- Stuck count resets on new problem detection
+- Enhanced detectWrongAnswer() with more correction patterns
+- Socratic prompt v1.6: Complete information handling + self-correction support
+
 **Next Steps**:
 - PR-009: Multi-Problem Testing and Fixes (recommended next)
 - PR-010: Documentation
 - PR-011: Deployment and Demo Video
-- PR-005, PR-006 (optional - much functionality already in place)
 
 ---
 
