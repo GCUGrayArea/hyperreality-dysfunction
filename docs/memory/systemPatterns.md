@@ -265,6 +265,90 @@ UI update (auto-scroll)
 
 ---
 
+## PR-008 Patterns: UI Polish and Error Handling
+
+**Comprehensive Error Handling System** (2025-11-03):
+
+### Error Detection and Classification
+**Implementation**: `Chat.jsx` - `getErrorDetails()` function
+- Analyzes error messages to determine type (API key, rate limit, network, timeout, unknown)
+- Returns structured error object: `{title, message, recoverable}`
+- Provides actionable guidance for each error type
+
+**Error Types Handled**:
+1. **API Key Errors** (401/unauthorized): Non-recoverable, directs to .env setup
+2. **Rate Limit** (429): Recoverable, suggests waiting
+3. **Network Errors**: Recoverable, suggests connection check
+4. **Timeout Errors**: Recoverable, suggests retry
+5. **Unknown Errors**: Recoverable with generic guidance
+
+### Retry Mechanism Pattern
+**State Management**:
+- `lastError`: Stores current error details for display
+- `retryPayload`: Stores {type, data} to replay failed request
+- `handleRetry()`: Executes retry based on payload type
+
+**Retry Flow**:
+1. Error occurs → Store error + payload
+2. Display error UI with "Try Again" button
+3. User clicks → handleRetry() replays original request
+4. Clear error state on new request
+
+### Accessibility (ARIA) Patterns
+
+**Semantic HTML**:
+- `<article>` for messages (was `<div>`)
+- `<header>` for chat header (was `<div>`)
+- `<time>` for timestamps (was `<span>`)
+- `role="main"` on chat container
+- `role="log"` + `aria-live="polite"` on messages container
+
+**ARIA Labels**:
+- All interactive elements have `aria-label`
+- Form inputs have `aria-describedby` for hints
+- Loading states have descriptive labels
+- Error alerts use `role="alert"`
+
+**Screen Reader Support**:
+- `.sr-only` utility class for visually hidden hints
+- Math equations labeled with raw LaTeX for screen readers
+- Message sender and time announced properly
+
+### Responsive Design Patterns
+
+**Breakpoints**:
+- Desktop: >768px (default styles)
+- Tablet: ≤768px (adjusted padding, font sizes)
+- Mobile: ≤640px (further optimization)
+
+**Mobile-Specific**:
+- Increased touch targets (padding adjustments)
+- Scrollable math equations with momentum scrolling
+- No box shadow on mobile (cleaner edge-to-edge)
+- Smaller font sizes optimized for small screens
+
+**Print Styles**:
+- Hide header, input, and upload sections
+- Show only conversation history
+- Remove shadows and backgrounds
+
+### Loading State Enhancements
+**Accessibility**: `aria-label="Tutor is thinking"` on loading indicator
+**Visual**: Existing animated dots pattern maintained
+**State Management**: Unified loading state prevents concurrent requests
+
+### Error UI Pattern
+**Visual Design**:
+- Red-themed error box (`#ffebee` background)
+- Left border accent (`#f44336`)
+- Title + detailed message + optional retry button
+- Retry button styled with error color scheme
+
+**Placement**: Appears above loading indicator, below messages
+**Dismissal**: Auto-clears on new request
+
+---
+
 ## Notes for Future PRs
 
 ### PR-005 (Response Evaluation)

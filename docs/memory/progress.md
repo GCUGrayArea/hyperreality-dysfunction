@@ -98,6 +98,30 @@ None yet - no implementation started
 - **Key Achievement**: Critical validation gate passed, unblocks next PRs
 - **Files**: math-tutor/src/services/openai.js, docs/PROMPTS.md, docs/TESTING-PR-004.md
 
+### PR-007: Math Rendering Integration ✅ (2025-11-03)
+- **Status**: Complete
+- **Library**: KaTeX (v0.16+)
+- **Features**: Inline and block LaTeX rendering, error handling
+- **Files**: math-tutor/src/utils/latexRenderer.js, math-tutor/src/components/Message.jsx
+
+### PR-008: UI Polish and Error Handling ✅ (2025-11-03)
+- **Status**: Complete
+- **Key Features**:
+  - Comprehensive error handling with 5 error types detected
+  - Retry mechanism for recoverable errors
+  - Full accessibility (ARIA labels, semantic HTML, screen reader support)
+  - Responsive design (desktop/tablet/mobile breakpoints)
+  - Enhanced loading states
+  - Print styles
+- **Files Modified**:
+  - math-tutor/src/components/Chat.jsx (error handling, retry, accessibility)
+  - math-tutor/src/components/ChatInput.jsx (accessibility)
+  - math-tutor/src/components/Message.jsx (semantic HTML, accessibility)
+  - math-tutor/src/styles/Chat.module.css (error UI, responsive, print)
+  - math-tutor/src/styles/ChatInput.module.css (responsive, focus states)
+  - math-tutor/src/styles/Message.module.css (responsive)
+  - math-tutor/src/index.css (.sr-only utility)
+
 ---
 
 ## In Progress PRs
