@@ -21,7 +21,15 @@ export default function Chat() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(true);
+  const [lastError, setLastError] = useState(null);
+  const [retryPayload, setRetryPayload] = useState(null);
+
+  // PR-005: Response evaluation and hint progression
+  const [stuckCount, setStuckCount] = useState(0);
+  const [currentProblem, setCurrentProblem] = useState(null);
+
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -33,6 +41,10 @@ export default function Chat() {
   }, [messages]);
 
   const handleSendMessage = async (content) => {
+    // Clear previous errors
+    setLastError(null);
+    setRetryPayload(null);
+
     // Add user message
     const userMessage = {
       id: Date.now(),
@@ -56,7 +68,8 @@ export default function Chat() {
           content: msg.content
         }));
 
-      const response = await getSocraticResponse(conversationHistory);
+      // PR-005: Pass stuck count for hint progression
+      const response = await getSocraticResponse(conversationHistory, stuckCount);
 
       if (response.success) {
         const tutorMessage = {
@@ -66,31 +79,131 @@ export default function Chat() {
           timestamp: Date.now()
         };
         setMessages(prev => [...prev, tutorMessage]);
+
+        // PR-005: Update stuck count based on tutor response
+        if (detectWrongAnswer(response.content)) {
+          setStuckCount(prev => prev + 1);
+        } else if (detectCorrectAnswer(response.content)) {
+          setStuckCount(0); // Reset on correct answer
+        }
       } else {
-        // Handle error
-        const errorMessage = {
-          id: Date.now() + 1,
-          role: 'tutor',
-          content: `I'm having trouble connecting right now. Please check that your API key is set up correctly. Error: ${response.error}`,
-          timestamp: Date.now()
-        };
-        setMessages(prev => [...prev, errorMessage]);
+        // Handle error with retry capability
+        const errorDetail = getErrorDetails(response.error);
+        setLastError(errorDetail);
+        setRetryPayload({ type: 'message', data: content });
       }
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        role: 'tutor',
-        content: 'I encountered an error. Please try again or check your connection.',
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      const errorDetail = getErrorDetails(error.message || 'Unknown error');
+      setLastError(errorDetail);
+      setRetryPayload({ type: 'message', data: content });
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * PR-005: Detect if tutor response indicates student was wrong/stuck
+   * Looks for correction patterns in tutor's response
+   */
+  const detectWrongAnswer = (tutorResponse) => {
+    const lowerResponse = tutorResponse.toLowerCase();
+    const correctionPhrases = [
+      'let\'s check',
+      'not quite',
+      'that\'s not',
+      'double-check',
+      'try again',
+      'hmm',
+      'reconsider',
+      'look again',
+      'careful',
+      'actually',
+      'incorrect'
+    ];
+
+    return correctionPhrases.some(phrase => lowerResponse.includes(phrase));
+  };
+
+  /**
+   * PR-005: Detect if tutor response celebrates correct answer
+   * Indicates student got it right
+   */
+  const detectCorrectAnswer = (tutorResponse) => {
+    const lowerResponse = tutorResponse.toLowerCase();
+    const celebrationPhrases = [
+      'excellent',
+      'perfect',
+      'that\'s right',
+      'correct',
+      'exactly',
+      'well done',
+      'great job',
+      'nice work'
+    ];
+
+    return celebrationPhrases.some(phrase => lowerResponse.includes(phrase));
+  };
+
+  const getErrorDetails = (errorMessage) => {
+    if (!errorMessage) {
+      return {
+        title: 'Connection Error',
+        message: 'Unable to connect to the server. Please check your internet connection.',
+        recoverable: true
+      };
+    }
+
+    const lowerError = errorMessage.toLowerCase();
+
+    if (lowerError.includes('api key') || lowerError.includes('unauthorized') || lowerError.includes('401')) {
+      return {
+        title: 'API Key Error',
+        message: 'Your API key is missing or invalid. Please check your .env file and make sure VITE_OPENAI_API_KEY is set correctly.',
+        recoverable: false
+      };
+    } else if (lowerError.includes('rate limit') || lowerError.includes('429')) {
+      return {
+        title: 'Rate Limit Exceeded',
+        message: 'Too many requests. Please wait a moment before trying again.',
+        recoverable: true
+      };
+    } else if (lowerError.includes('network') || lowerError.includes('fetch')) {
+      return {
+        title: 'Network Error',
+        message: 'Unable to reach the server. Please check your internet connection.',
+        recoverable: true
+      };
+    } else if (lowerError.includes('timeout')) {
+      return {
+        title: 'Request Timeout',
+        message: 'The request took too long. Please try again.',
+        recoverable: true
+      };
+    } else {
+      return {
+        title: 'Unexpected Error',
+        message: `Something went wrong: ${errorMessage}`,
+        recoverable: true
+      };
+    }
+  };
+
+  const handleRetry = () => {
+    if (!retryPayload) return;
+
+    if (retryPayload.type === 'message') {
+      handleSendMessage(retryPayload.data);
+    } else if (retryPayload.type === 'image') {
+      handleParsedText(retryPayload.text, retryPayload.imageUrl);
+    }
+  };
+
   const handleParsedText = async (text, imageUrl) => {
+    // Clear previous errors
+    setLastError(null);
+    setRetryPayload(null);
+
     // Add user message with the parsed problem
     const userMessage = {
       id: Date.now(),
@@ -113,7 +226,8 @@ export default function Chat() {
           content: msg.content
         }));
 
-      const response = await getSocraticResponse(conversationHistory);
+      // PR-005: Pass stuck count for hint progression
+      const response = await getSocraticResponse(conversationHistory, stuckCount);
 
       if (response.success) {
         const tutorMessage = {
@@ -123,38 +237,44 @@ export default function Chat() {
           timestamp: Date.now()
         };
         setMessages(prev => [...prev, tutorMessage]);
+
+        // PR-005: Update stuck count based on tutor response
+        if (detectWrongAnswer(response.content)) {
+          setStuckCount(prev => prev + 1);
+        } else if (detectCorrectAnswer(response.content)) {
+          setStuckCount(0); // Reset on correct answer
+        }
       } else {
-        const errorMessage = {
-          id: Date.now() + 1,
-          role: 'tutor',
-          content: `I'm having trouble connecting right now. Please check that your API key is set up correctly. Error: ${response.error}`,
-          timestamp: Date.now()
-        };
-        setMessages(prev => [...prev, errorMessage]);
+        // Handle error with retry capability
+        const errorDetail = getErrorDetails(response.error);
+        setLastError(errorDetail);
+        setRetryPayload({ type: 'image', text, imageUrl });
       }
     } catch (error) {
       console.error('Error in handleParsedText:', error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        role: 'tutor',
-        content: 'I encountered an error. Please try again or check your connection.',
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      const errorDetail = getErrorDetails(error.message || 'Unknown error');
+      setLastError(errorDetail);
+      setRetryPayload({ type: 'image', text, imageUrl });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className={styles.chatContainer}>
-      <div className={styles.header}>
+    <div className={styles.chatContainer} role="main">
+      <header className={styles.header}>
         <h1 className={styles.title}>AI Math Tutor</h1>
         <p className={styles.subtitle}>Socratic Learning Assistant</p>
-      </div>
+        {/* PR-005: Hint progression indicator */}
+        {stuckCount >= 2 && (
+          <div className={styles.hintStatus} role="status" aria-live="polite">
+            💡 Hint Level: {stuckCount >= 3 ? 'More Concrete' : 'Progressing'}
+          </div>
+        )}
+      </header>
 
       {showImageUpload && (
-        <div className={styles.imageUploadSection}>
+        <div className={styles.imageUploadSection} role="region" aria-label="Problem input options">
           <ImageUpload onParsedText={handleParsedText} />
           <div className={styles.divider}>
             <span>or type below</span>
@@ -162,7 +282,12 @@ export default function Chat() {
         </div>
       )}
 
-      <div className={styles.messagesContainer}>
+      <div
+        className={styles.messagesContainer}
+        role="log"
+        aria-live="polite"
+        aria-label="Conversation history"
+      >
         {messages.map((message) => (
           <Message
             key={message.id}
@@ -172,8 +297,24 @@ export default function Chat() {
           />
         ))}
 
+        {lastError && (
+          <div className={styles.errorMessage} role="alert">
+            <h3 className={styles.errorText}>{lastError.title}</h3>
+            <p>{lastError.message}</p>
+            {lastError.recoverable && retryPayload && (
+              <button
+                onClick={handleRetry}
+                className={styles.retryButton}
+                aria-label="Retry failed request"
+              >
+                Try Again
+              </button>
+            )}
+          </div>
+        )}
+
         {isLoading && (
-          <div className={styles.loadingIndicator}>
+          <div className={styles.loadingIndicator} aria-label="Tutor is thinking">
             <div className={styles.dot}></div>
             <div className={styles.dot}></div>
             <div className={styles.dot}></div>
@@ -186,6 +327,7 @@ export default function Chat() {
       <ChatInput
         onSendMessage={handleSendMessage}
         disabled={isLoading}
+        ref={inputRef}
       />
     </div>
   );

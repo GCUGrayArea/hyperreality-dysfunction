@@ -15,19 +15,25 @@ export default function Message({ role, content, timestamp }) {
   // Parse content to extract LaTeX and text parts
   const parts = parseLatex(content);
 
+  const timeString = timestamp ? new Date(timestamp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  }) : '';
+
   return (
-    <div className={`${styles.message} ${isUser ? styles.user : styles.tutor}`}>
+    <article
+      className={`${styles.message} ${isUser ? styles.user : styles.tutor}`}
+      role="article"
+      aria-label={`${isUser ? 'Your' : "Tutor's"} message at ${timeString}`}
+    >
       <div className={styles.messageHeader}>
-        <span className={styles.role}>
+        <span className={styles.role} aria-label={isUser ? 'Student' : 'AI Tutor'}>
           {isUser ? 'You' : 'Tutor'}
         </span>
         {timestamp && (
-          <span className={styles.timestamp}>
-            {new Date(timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </span>
+          <time className={styles.timestamp} dateTime={new Date(timestamp).toISOString()}>
+            {timeString}
+          </time>
         )}
       </div>
       <div className={styles.content}>
@@ -47,11 +53,13 @@ export default function Message({ role, content, timestamp }) {
                 key={index}
                 dangerouslySetInnerHTML={{ __html: html }}
                 className={part.display ? styles.mathBlock : styles.mathInline}
+                role="img"
+                aria-label={`Math equation: ${part.content}`}
               />
             );
           }
         })}
       </div>
-    </div>
+    </article>
   );
 }
