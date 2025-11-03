@@ -61,3 +61,27 @@
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+/* Math rendering styles */
+.mathInline {
+  display: inline;
+  margin: 0 0.2em;
+}
+
+.mathBlock {
+  display: block;
+  margin: 1rem 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+/* Error display for failed LaTeX rendering */
+:global(.latex-error) {
+  color: #cc0000;
+  background-color: #ffeeee;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
+  cursor: help;
+}
