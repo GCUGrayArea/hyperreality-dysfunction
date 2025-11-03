@@ -29,6 +29,29 @@
   font-weight: 400;
 }
 
+/* PR-006: Current problem indicator */
+.currentProblem {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: white;
+  text-align: center;
+}
+
+.problemLabel {
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.problemText {
+  font-weight: 400;
+  opacity: 1;
+  font-style: italic;
+}
+
 /* PR-005: Hint progression status indicator */
 .hintStatus {
   margin-top: 0.75rem;

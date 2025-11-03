@@ -48,13 +48,8 @@ export default function Chat() {
     setLastError(null);
     setRetryPayload(null);
 
-    // PR-006: Detect if this is a new problem
-    const isNewProblem = detectNewProblem(content);
-    if (isNewProblem) {
-      setCurrentProblem(content);
-      _setProblemStartIndex(messages.length); // Index where this problem starts
-      setStuckCount(0); // Reset stuck count for new problem
-    }
+    // PR-009: Problem detection now handled by LLM metadata (after response)
+    // Removed client-side detectNewProblem() - LLM knows context better than regex
 
     // Add user message
     const userMessage = {
@@ -91,11 +86,20 @@ export default function Chat() {
         };
         setMessages(prev => [...prev, tutorMessage]);
 
-        // PR-005: Update stuck count based on tutor response
-        if (detectWrongAnswer(response.content)) {
-          setStuckCount(prev => prev + 1);
-        } else if (detectCorrectAnswer(response.content)) {
-          setStuckCount(0); // Reset on correct answer
+        // PR-009: Use LLM's metadata to update conversation state
+        if (response.metadata) {
+          // Update current problem if LLM detected a new one
+          if (response.metadata.isNewProblem && response.metadata.currentProblemText) {
+            setCurrentProblem(response.metadata.currentProblemText);
+            _setProblemStartIndex(messages.length);
+            setStuckCount(0); // Reset stuck count for new problem
+          }
+          // Update stuck count based on whether student was correct
+          else if (response.metadata.studentAnswerCorrect === false) {
+            setStuckCount(prev => prev + 1);
+          } else if (response.metadata.studentAnswerCorrect === true) {
+            setStuckCount(0); // Reset on correct answer
+          }
         }
       } else {
         // Handle error with retry capability
@@ -113,97 +117,16 @@ export default function Chat() {
     }
   };
 
-  /**
-   * PR-005: Detect if tutor response indicates student was wrong/stuck
-   * Looks for correction patterns in tutor's response
-   */
-  const detectWrongAnswer = (tutorResponse) => {
-    const lowerResponse = tutorResponse.toLowerCase();
-    const correctionPhrases = [
-      'let\'s check',
-      'let\'s go back',
-      'let\'s take a step back',
-      'not quite',
-      'that\'s not',
-      'doesn\'t equal',
-      'doesn\'t match',
-      'double-check',
-      'try again',
-      'hmm',
-      'reconsider',
-      'look again',
-      'look back',
-      'careful',
-      'actually',
-      'incorrect',
-      'substitute it back',
-      'substitute that back',
-      'verify',
-      'still trying'
-    ];
+  // PR-009: Removed detectWrongAnswer() and detectCorrectAnswer() heuristics
+  // These functions used brittle string matching that was unreliable
+  // Now relying on LLM's calculator tool for accurate math verification
 
-    return correctionPhrases.some(phrase => lowerResponse.includes(phrase));
-  };
-
-  /**
-   * PR-005: Detect if tutor response celebrates correct answer
-   * Indicates student got it right
-   */
-  const detectCorrectAnswer = (tutorResponse) => {
-    const lowerResponse = tutorResponse.toLowerCase();
-    const celebrationPhrases = [
-      'excellent',
-      'perfect',
-      'that\'s right',
-      'correct',
-      'exactly',
-      'well done',
-      'great job',
-      'nice work'
-    ];
-
-    return celebrationPhrases.some(phrase => lowerResponse.includes(phrase));
-  };
-
-  /**
-   * PR-006: Detect if user message is a new problem vs answer to current problem
-   * Heuristics: Contains equation symbols, operations, "solve", "find", etc.
-   * Bug Fix: Require minimum length to avoid detecting single-word answers as problems
-   */
-  const detectNewProblem = (userMessage) => {
-    const msg = userMessage.trim();
-
-    // BUG FIX: Short messages (≤10 chars) are very likely answers, not new problems
-    // This prevents "Area.", "x=4", "yes", etc. from being detected as problems
-    if (msg.length <= 10) {
-      return false;
-    }
-
-    // Check for mathematical problem indicators
-    const problemIndicators = [
-      /solve/i,
-      /find/i,
-      /what is/i,
-      /calculate/i,
-      /\d+\s*[+\-*/÷×]\s*\d+/, // arithmetic operations (3 + 7)
-      /\d+[a-z]\s*[+\-*/]\s*\d+\s*=/, // algebra with operations (2x + 5 = 13)
-      /[a-z]\s*[+\-*/]\s*\d+\s*=\s*\d+/, // algebra (x + 3 = 7)
-      /=.*\?/, // equation with question mark
-      /area|perimeter|volume/i, // geometry
-      /how many/i, // word problems
-      /\bif\b.*\bthen\b/i, // conditional problems
-    ];
-
-    const hasProblemPattern = problemIndicators.some(pattern => pattern.test(userMessage));
-
-    // If we found a problem pattern in a longer message, it's a new problem
-    if (hasProblemPattern) {
-      return true;
-    }
-
-    // For messages without clear problem indicators, default to false
-    return false;
-  };
+  // PR-009: Removed detectNewProblem() heuristic function
+  // Problem detection now handled by LLM metadata (isNewProblem field)
+  // LLM has full conversation context and can accurately distinguish between:
+  // - New problems: "What is 1/3+1/4?"
+  // - Work/answers: "1/3*4/4=4/12", "x=12", "7/12"
+  // The old regex-based approach couldn't handle this context-dependent distinction
 
   const getErrorDetails = (errorMessage) => {
     if (!errorMessage) {
@@ -303,11 +226,20 @@ export default function Chat() {
         };
         setMessages(prev => [...prev, tutorMessage]);
 
-        // PR-005: Update stuck count based on tutor response
-        if (detectWrongAnswer(response.content)) {
-          setStuckCount(prev => prev + 1);
-        } else if (detectCorrectAnswer(response.content)) {
-          setStuckCount(0); // Reset on correct answer
+        // PR-009: Use LLM's metadata to update conversation state
+        if (response.metadata) {
+          // Update current problem if LLM detected a new one
+          if (response.metadata.isNewProblem && response.metadata.currentProblemText) {
+            setCurrentProblem(response.metadata.currentProblemText);
+            _setProblemStartIndex(messages.length);
+            setStuckCount(0); // Reset stuck count for new problem
+          }
+          // Update stuck count based on whether student was correct
+          else if (response.metadata.studentAnswerCorrect === false) {
+            setStuckCount(prev => prev + 1);
+          } else if (response.metadata.studentAnswerCorrect === true) {
+            setStuckCount(0); // Reset on correct answer
+          }
         }
       } else {
         // Handle error with retry capability
