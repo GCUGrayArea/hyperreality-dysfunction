@@ -23,15 +23,16 @@ export default function Chat() {
   const [showImageUpload, setShowImageUpload] = useState(true);
   const [lastError, setLastError] = useState(null);
   const [retryPayload, setRetryPayload] = useState(null);
+
+  // PR-005: Response evaluation and hint progression
+  const [stuckCount, setStuckCount] = useState(0);
+
+  // PR-006: Problem state tracking
+  const [currentProblem, setCurrentProblem] = useState(null);
+  const [_problemStartIndex, _setProblemStartIndex] = useState(null); // Reserved for future use
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-
-  // TODO PR-005: Response evaluation and hint progression
-  // const [stuckCount, setStuckCount] = useState(0);
-
-  // TODO PR-006: Problem state tracking
-  // const [currentProblem, setCurrentProblem] = useState(null);
-  // const [problemStartIndex, setProblemStartIndex] = useState(null);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -51,7 +52,7 @@ export default function Chat() {
     const isNewProblem = detectNewProblem(content);
     if (isNewProblem) {
       setCurrentProblem(content);
-      setProblemStartIndex(messages.length); // Index where this problem starts
+      _setProblemStartIndex(messages.length); // Index where this problem starts
       setStuckCount(0); // Reset stuck count for new problem
     }
 
@@ -264,7 +265,7 @@ export default function Chat() {
 
     // PR-006: Track new problem from image upload
     setCurrentProblem(text);
-    setProblemStartIndex(messages.length); // Index where this problem starts
+    _setProblemStartIndex(messages.length); // Index where this problem starts
     setStuckCount(0); // Reset stuck count for new problem
 
     // Add user message with the parsed problem
