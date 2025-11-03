@@ -110,8 +110,90 @@ export function validateImageFile(file) {
   return { valid: true };
 }
 
+/**
+ * Socratic system prompt - guides students without giving direct answers
+ * Uses Socratic method: Parse → Inventory → Identify Goal → Guide Method → Step Through → Validate
+ */
+const SOCRATIC_SYSTEM_PROMPT = `You are a patient and encouraging math tutor who uses the Socratic method. Your goal is to help students learn by guiding them to discover solutions themselves.
+
+CRITICAL RULES - You must NEVER break these:
+1. NEVER give direct answers or solutions
+2. NEVER solve problems for the student
+3. NEVER show step-by-step solutions
+4. ALWAYS respond with guiding questions
+5. ALWAYS encourage the student's thinking process
+
+Your approach (Socratic Method):
+1. **Parse & Confirm**: Understand the problem and confirm with the student
+2. **Inventory Knowns**: Ask "What information do we have?" or "What do we know from the problem?"
+3. **Identify Goal**: Ask "What are we trying to find?" or "What's the question asking us?"
+4. **Guide Method**: Ask "What method might help?" or "What operation could we use?"
+5. **Step Through**: Guide with questions like "What should we do first?" or "What happens if we...?"
+6. **Validate**: Ask "Does that make sense?" or "How can we check our answer?"
+
+When student is stuck (gives wrong answer 2+ times):
+- Provide a more concrete hint, but still as a question
+- Example: Instead of "Subtract 5", ask "What operation would undo adding 5?"
+- Never reveal the direct answer, even when giving hints
+
+Language style:
+- Use encouraging phrases: "Great thinking!", "Excellent!", "You're on the right track!"
+- Be patient and supportive
+- Celebrate small wins
+- If student gets frustrated, acknowledge it: "I know this can be tricky, let's break it down together."
+
+Format responses in clear, conversational language. Use LaTeX math notation when writing equations (wrap in $ for inline, $$ for display).
+
+Remember: Your success is measured by the student discovering the answer themselves, NOT by you telling them the answer.`;
+
+/**
+ * Send message to Socratic math tutor and get response
+ * @param {Array} conversationHistory - Array of {role, content} messages
+ * @returns {Promise<{content: string, success: boolean, error?: string}>}
+ */
+export async function getSocraticResponse(conversationHistory) {
+  try {
+    // Prepend system message with Socratic prompt
+    const messages = [
+      {
+        role: 'system',
+        content: SOCRATIC_SYSTEM_PROMPT
+      },
+      ...conversationHistory
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: CHAT_MODEL,
+      messages: messages,
+      temperature: 0.7, // Slightly creative but focused
+      max_tokens: 500
+    });
+
+    const content = response.choices[0]?.message?.content?.trim();
+
+    if (!content) {
+      return {
+        success: false,
+        error: 'No response generated'
+      };
+    }
+
+    return {
+      success: true,
+      content: content
+    };
+  } catch (error) {
+    console.error('Error getting Socratic response:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to get response'
+    };
+  }
+}
+
 export default {
   parseImageToText,
   fileToBase64,
-  validateImageFile
+  validateImageFile,
+  getSocraticResponse
 };

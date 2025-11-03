@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import Message from './Message';
 import ChatInput from './ChatInput';
 import ImageUpload from './ImageUpload';
+import { getSocraticResponse } from '../services/openai';
 import styles from '../styles/Chat.module.css';
 
 /**
@@ -31,7 +32,7 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (content) => {
+  const handleSendMessage = async (content) => {
     // Add user message
     const userMessage = {
       id: Date.now(),
@@ -40,25 +41,56 @@ export default function Chat() {
       timestamp: Date.now()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setIsLoading(true);
     setShowImageUpload(false); // Hide upload after first interaction
 
-    // TODO: This is a placeholder. Will be replaced with actual LLM integration in PR-004
-    // For now, simulate a tutor response
-    setTimeout(() => {
-      const tutorMessage = {
+    // Get Socratic response from LLM
+    try {
+      // Convert messages to OpenAI format (skip initial tutor greeting for API)
+      const conversationHistory = newMessages
+        .slice(1) // Skip the initial greeting
+        .map(msg => ({
+          role: msg.role === 'tutor' ? 'assistant' : 'user',
+          content: msg.content
+        }));
+
+      const response = await getSocraticResponse(conversationHistory);
+
+      if (response.success) {
+        const tutorMessage = {
+          id: Date.now() + 1,
+          role: 'tutor',
+          content: response.content,
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, tutorMessage]);
+      } else {
+        // Handle error
+        const errorMessage = {
+          id: Date.now() + 1,
+          role: 'tutor',
+          content: `I'm having trouble connecting right now. Please check that your API key is set up correctly. Error: ${response.error}`,
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      console.error('Error in handleSendMessage:', error);
+      const errorMessage = {
         id: Date.now() + 1,
         role: 'tutor',
-        content: 'That\'s interesting! Let me think about that... (This is a placeholder response. Real Socratic dialogue will be implemented in PR-004 when we integrate the LLM.)',
+        content: 'I encountered an error. Please try again or check your connection.',
         timestamp: Date.now()
       };
-      setMessages(prev => [...prev, tutorMessage]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleParsedText = (text, imageUrl) => {
+  const handleParsedText = async (text, imageUrl) => {
     // Add user message with the parsed problem
     const userMessage = {
       id: Date.now(),
@@ -67,21 +99,51 @@ export default function Chat() {
       timestamp: Date.now()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setIsLoading(true);
     setShowImageUpload(false); // Hide upload after successful parse
 
-    // Simulate tutor response (will be replaced in PR-004)
-    setTimeout(() => {
-      const tutorMessage = {
+    // Get Socratic response from LLM
+    try {
+      const conversationHistory = newMessages
+        .slice(1) // Skip the initial greeting
+        .map(msg => ({
+          role: msg.role === 'tutor' ? 'assistant' : 'user',
+          content: msg.content
+        }));
+
+      const response = await getSocraticResponse(conversationHistory);
+
+      if (response.success) {
+        const tutorMessage = {
+          id: Date.now() + 1,
+          role: 'tutor',
+          content: response.content,
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, tutorMessage]);
+      } else {
+        const errorMessage = {
+          id: Date.now() + 1,
+          role: 'tutor',
+          content: `I'm having trouble connecting right now. Please check that your API key is set up correctly. Error: ${response.error}`,
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      console.error('Error in handleParsedText:', error);
+      const errorMessage = {
         id: Date.now() + 1,
         role: 'tutor',
-        content: `Great! I can see your problem: "${text}". Let's work through this together! (Socratic dialogue will be implemented in PR-004)`,
+        content: 'I encountered an error. Please try again or check your connection.',
         timestamp: Date.now()
       };
-      setMessages(prev => [...prev, tutorMessage]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
