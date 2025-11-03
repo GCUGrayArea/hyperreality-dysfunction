@@ -29,6 +29,38 @@
   font-weight: 400;
 }
 
+/* Image upload section */
+.imageUploadSection {
+  padding: 1.5rem;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background-color: #e0e0e0;
+}
+
+.divider span {
+  position: relative;
+  background-color: #fff;
+  padding: 0 1rem;
+  color: #757575;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
 .messagesContainer {
   flex: 1;
   overflow-y: auto;
@@ -112,6 +144,10 @@
 
   .subtitle {
     font-size: 0.875rem;
+  }
+
+  .imageUploadSection {
+    padding: 1rem;
   }
 
   .messagesContainer {
