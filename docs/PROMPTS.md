@@ -1,6 +1,6 @@
 # Prompt Engineering Notes - Socratic Math Tutor
 
-**Last Updated**: 2025-11-03 (PR-004)
+**Last Updated**: 2025-11-03 (PR-006 v1.6 - Complete Information Handling)
 **Model**: GPT-4o (via OpenAI API)
 **Temperature**: 0.7
 
@@ -252,6 +252,22 @@ For PR-004 to pass the validation gate, the system must demonstrate:
   - Used warning emoji for visual emphasis
 - **Result**: PASS - Catches math errors, no false celebration, proper verification
 - **Test Results**: All tests pass (Tests 1-4)
+
+**v1.6** (2025-11-03, PR-006 - Complete Information Handling):
+- **Problem Found**: When student provides complete information (e.g., "Find area of rectangle with width 8 and height 5"), tutor asks redundant questions ("What are the dimensions?")
+- **Root Cause**: Socratic Method section rigidly follows all steps without context adaptation
+- **Fix**: Enhanced Socratic Method steps with conditional logic:
+  - **Inventory Knowns**: If complete info provided, ACKNOWLEDGE it instead of asking
+  - **Identify Goal**: If goal stated, acknowledge instead of asking
+  - Added emphasis: "Adapt your approach based on what the student provides. Don't robotically follow all steps if information is already given."
+  - Added self-correction handling:
+    - Recognizes keywords: "typo", "oops", "I meant", "correction"
+    - Acknowledges positively: "I see you caught that!"
+    - Verifies corrected answer is correct
+    - Does NOT ask to recalculate after self-correction
+- **Result**: PASS - Acknowledges provided information naturally, handles self-corrections well
+- **Before**: "Find area with width 8, height 5" → "What are the dimensions?"
+- **After**: "Find area with width 8, height 5" → "I see we have width 8 and height 5. So we need to find the area."
 
 ---
 
