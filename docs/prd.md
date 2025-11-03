@@ -512,14 +512,29 @@ Test system on minimum 5 problems across types:
 
 ## Key Decision Log
 
-This section will be updated as decisions are made. Format:
+This section is updated as decisions are made. Format:
 
 **[Decision Point]** - **When**: [Date/Day] - **Decision**: [What was chosen] - **Rationale**: [Why]
 
-Examples to be filled in during development:
-- **Frontend Framework** - When: Day 1 - Decision: TBD - Rationale: TBD
-- **LLM Provider** - When: Day 1 - Decision: TBD - Rationale: TBD
-- **Math Rendering** - When: Day 4 - Decision: TBD - Rationale: TBD
+### PR-001 Decisions (2025-11-03)
+
+- **Frontend Framework** - When: PR-001 (Day 1) - Decision: React 18.3.1 + Vite 6.0.5 - Rationale: Fast dev server, modern tooling, simple SPA setup, large ecosystem. Rejected Next.js as too heavyweight for MVP.
+
+- **LLM Provider** - When: PR-001 (Day 1) - Decision: OpenAI GPT-4 - Rationale: Single API handles both image parsing (GPT-4 Vision) and Socratic dialogue (GPT-4). Considered Anthropic Claude but would need separate OCR solution.
+
+- **Image Parsing** - When: PR-001 (Day 1) - Decision: OpenAI GPT-4 Vision - Rationale: Integrated with LLM provider, handles printed math text well. Starting focus on printed text (easier than handwritten).
+
+- **Architecture** - When: PR-001 (Day 1) - Decision: Client-side SPA with direct API calls - Rationale: Simpler deployment, fewer moving parts for MVP. May add backend proxy in production for API key security.
+
+- **Styling Approach** - When: PR-001 (Day 1) - Decision: CSS Modules - Rationale: Scoped styles, no extra dependencies, meets "NO Tailwind" user constraint.
+
+- **State Management** - When: PR-001 (Day 1) - Decision: React built-in (useState, useContext) - Rationale: Sufficient for MVP complexity. May add Zustand if needed later.
+
+### Future Decisions
+
+- **Math Rendering** - When: Day 4 (PR-007) - Decision: TBD - Rationale: TBD
+- **Deployment Platform** - When: Day 5 (PR-011) - Decision: TBD - Rationale: TBD
+- **Stretch Features** - When: Day 6-7 (PR-012+) - Decision: TBD - Rationale: TBD
 
 ---
 
