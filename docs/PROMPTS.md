@@ -196,12 +196,40 @@ For PR-004 to pass the validation gate, the system must demonstrate:
 
 ## Prompt Version History
 
-**v1.0** (2025-11-03, PR-004):
+**v1.0** (2025-11-03, PR-004 - Initial):
 - Initial Socratic prompt with 5 critical rules
 - 6-step method flow
 - Progressive hint system
 - LaTeX notation support
 - Temperature: 0.7
+
+**v1.1** (2025-11-03, PR-004 - Iteration 1):
+- **Problem Found**: Test 3 failure - LLM said "getting warmer" when student went from x=4.5 to x=2 (actually further from correct x=4)
+- **Root Cause**: No guidance on mathematical verification; LLM assumed any change = progress
+- **Fix**: Added rules 6-8:
+  - Rule 6: ALWAYS verify mathematical correctness before feedback
+  - Rule 7: NEVER use comparative feedback ("warmer/colder/closer") unless verified
+  - Rule 8: Guide toward correct method, not encourage guessing
+- **Result**: Improved but still used "you're getting closer" language
+
+**v1.2** (2025-11-03, PR-004 - Iteration 2):
+- **Problem Found**: Still using comparative language despite Rule 7
+- **Root Cause**: General prohibition not specific enough
+- **Fix**: Explicit prohibition list in "When student gives wrong answers" section:
+  - DO NOT use phrases like "getting warmer", "getting closer", "you're almost there", "getting better"
+  - DO NOT compare wrong answers to each other
+  - Instead redirect to METHOD and PROCESS
+- **Result**: Noticeably better, but still acknowledged "trying different values"
+
+**v1.3** (2025-11-03, PR-004 - Iteration 3):
+- **Problem Found**: Mild encouragement of guess-and-check approach ("trying different values")
+- **Root Cause**: Language style section encouraged all attempts equally
+- **Fix**: Updated Language style section:
+  - Conditional encouragement (only for CORRECT PROCESS)
+  - Explicit anti-guessing stance
+  - Specific redirect language for guessing behavior
+- **Result**: PASS - Actively discourages guessing, redirects to systematic method, maintains context
+- **Test Results**: Tests 1-3 all pass
 
 ---
 
