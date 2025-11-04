@@ -225,13 +225,66 @@ OpenAI GPT-4o-mini
 - ✅ Rate limiting and cost control at backend level
 
 ### Socratic Prompt Engineering
-The system uses a carefully engineered prompt (v1.7) that:
-- Prohibits giving direct answers through multiple explicit rules
-- Enforces calculator verification for all arithmetic
-- Provides progressive hints when students are stuck
-- Maintains encouraging, patient tone throughout
 
-See [docs/PROMPTS.md](../docs/PROMPTS.md) for full prompt engineering details and iteration history.
+**Current Version**: v1.7 (7 iterations, ~4 hours of refinement)
+
+The system uses a carefully engineered prompt that evolved through rigorous testing:
+
+**What We Ended Up With**:
+- **Structure**: Mandatory verification protocol at top, 10 critical rules, 6-step Socratic flow
+- **Function Calling**: Calculator tool for 100% accurate arithmetic verification
+- **Temperature**: 0.3 (lowered from 0.7 for math consistency)
+- **Output Format**: JSON with structured metadata (`isNewProblem`, `studentAnswerCorrect`, `problemComplete`)
+- **Length**: ~2,500 words of carefully crafted instructions
+
+**Major Features**:
+- ⚠️ Mandatory verification protocol (verifies arithmetic before responding)
+- 10 critical rules (NEVER give direct answers, ALWAYS verify math)
+- Progressive hint system (more concrete after 2+ stuck turns)
+- Self-correction detection (recognizes "oops", "typo", "I meant")
+- Factoring verification (checks BOTH sum AND product)
+- Anti-redundancy rules (doesn't ask for info already provided)
+
+**Big Lessons Learned**:
+
+1. **LLMs Prioritize Flow Over Accuracy**
+   - Will celebrate incorrect answers ("3+7=9" → "Exactly!") to maintain conversational flow
+   - Fix: Verification protocol at the TOP of prompt with concrete anti-examples
+
+2. **Prompt Engineering Has Diminishing Returns**
+   - After ~3 iterations on same issue, structural solutions work better
+   - Function calling > extensive prompting for deterministic tasks
+   - Tools + schemas > hundreds of words of instructions
+
+3. **Explicit Examples > Abstract Rules**
+   - ❌ "3 + 7 = 9" → "Exactly!" is WRONG (concrete anti-example)
+   - ✅ "3 + 7 = 9" → "Let's check that" is CORRECT
+   - Showed exact failure cases to prevent them
+
+4. **Context-Aware Classification Belongs in LLM**
+   - Started with complex regex for "new problem" detection (brittle, context-unaware)
+   - Ended with LLM returning `metadata.isNewProblem` (robust, context-aware)
+   - Rule: If it requires understanding context, let the LLM decide
+
+5. **Function Calling for Reliability**
+   - Calculator tool eliminated all arithmetic errors
+   - LLM can focus on pedagogy, delegates math verification
+   - 100% accuracy on calculations vs. ~85% with prompting alone
+
+6. **Top Placement + Visual Emphasis**
+   - Most critical rules must be at the very top
+   - ⚠️ Warning emoji draws attention to critical sections
+   - Repetition across sections reinforces key points
+
+**Iteration Highlights**:
+- **v1.0**: Initial Socratic prompt (basic flow)
+- **v1.2**: Fixed comparative feedback ("warmer/colder")
+- **v1.3**: Eliminated guess-and-check encouragement
+- **v1.5**: Added mandatory verification protocol with anti-examples (solved false celebration)
+- **v1.6**: Contextual adaptation (acknowledges provided info instead of asking redundantly)
+- **v1.7**: Factoring verification (checks BOTH sum AND product with calculator)
+
+See [docs/PROMPTS.md](../docs/PROMPTS.md) for complete prompt engineering details, all 7 iterations, and testing results.
 
 ### Function Calling Architecture
 The tutor uses OpenAI's function calling feature to access a calculator tool:
