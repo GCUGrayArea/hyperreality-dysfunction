@@ -17,6 +17,7 @@ An AI-powered math tutor that uses the Socratic method to guide students through
 - **Calculator Function Calling**: LLM uses calculator tool to verify all arithmetic before responding
 - **Factoring Verification**: Checks both sum AND product when validating factors
 - **Self-Correction Detection**: Recognizes when students catch their own errors
+- **Interactive Whiteboard**: Full-featured drawing canvas for visual problem solving (geometry, graphing)
 - **Error Handling**: Comprehensive error detection with retry mechanism
 - **Accessibility**: ARIA labels, semantic HTML, screen reader support
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
@@ -33,6 +34,7 @@ Try it now - no API key required!
 - **Backend**: Vercel Serverless Functions (Node.js)
 - **LLM**: OpenAI GPT-4o-mini (with Vision for image parsing)
 - **Math Rendering**: KaTeX 0.16.25
+- **Whiteboard**: Excalidraw (@excalidraw/excalidraw 0.18.0)
 - **Styling**: CSS Modules
 - **Function Calling**: OpenAI SDK 6.7.0 with calculator tool integration
 - **Math Evaluation**: expr-eval 2.0.2 for safe expression parsing
@@ -70,17 +72,18 @@ OPENAI_MODEL=gpt-4o-mini
 OPENAI_VISION_MODEL=gpt-4o-mini
 ```
 
-**Note**: For local development with Vercel CLI, use:
+**Note**: For local development with full features (including whiteboard), use Vercel CLI:
 ```bash
-vercel dev
+vercel dev --listen 3000
 ```
 
-Or for standard Vite dev server (requires client-side API key):
+The application will be available at `http://localhost:3000`
+
+For basic development without whiteboard, you can use standard Vite (requires client-side API key):
 ```bash
 npm run dev
 ```
-
-The application will be available at `http://localhost:3000` (Vercel) or `http://localhost:5173` (Vite)
+Available at `http://localhost:5173`
 
 ## Usage
 
@@ -94,6 +97,12 @@ The application will be available at `http://localhost:3000` (Vercel) or `http:/
 1. Click the upload area or drag and drop an image
 2. The tutor will extract the math problem using GPT-4 Vision
 3. Follow the Socratic dialogue as with text input
+
+### Whiteboard
+1. Click the "📐 Whiteboard" button in the header
+2. Use drawing tools to sketch geometry problems, graph functions, or visualize concepts
+3. Canvas persists while you work through problems with the tutor
+4. The tutor cannot read the canvas directly - use it as a visual workspace while typing questions in chat
 
 ### Supported Problem Types
 
@@ -109,7 +118,33 @@ The tutor has been validated on:
 
 ## Deployment
 
-### Deploy Your Own Instance
+### Whiteboard Bundle Size Considerations
+
+The interactive whiteboard feature (PR-012) is fully functional and available in the codebase, but adds approximately **2MB to the bundle size** due to the Excalidraw library.
+
+**Deployment Options:**
+
+1. **Vercel Free Tier (Current Production)**
+   - Core MVP deployed without whiteboard
+   - All 11 core PRs functional (Socratic dialogue, image upload, calculator, etc.)
+   - Live at: https://math-tutor-go4eke7pc-grays-projects-783dc481.vercel.app
+
+2. **Local Development with Full Features**
+   - Whiteboard fully functional when running `vercel dev --listen 3000`
+   - Perfect for testing, demo videos, and personal use
+   - Complete feature set available
+
+3. **Self-Hosted / Upgraded Hosting**
+   - Deploy to services without strict bundle size limits
+   - Vercel Pro ($20/month) supports larger bundles
+   - Alternative platforms (Netlify, Railway, etc.)
+
+**To deploy with whiteboard:**
+- Upgrade to Vercel Pro, or
+- Use alternative hosting platform with higher limits, or
+- Clone repo and run locally with `vercel dev`
+
+### Deploy Your Own Instance (Core MVP)
 
 1. **Push to GitHub**
 ```bash
@@ -152,7 +187,8 @@ math-tutor/
 │   │   ├── Chat.jsx          # Main chat container
 │   │   ├── ChatInput.jsx     # Message input component
 │   │   ├── Message.jsx       # Message display component
-│   │   └── ImageUpload.jsx   # Image upload component
+│   │   ├── ImageUpload.jsx   # Image upload component
+│   │   └── Whiteboard.jsx    # Interactive whiteboard (PR-012)
 │   ├── services/             # API integration
 │   │   └── openai.js         # Frontend API client (calls backend)
 │   ├── utils/                # Utility functions
@@ -162,7 +198,8 @@ math-tutor/
 │   │   ├── Chat.module.css
 │   │   ├── ChatInput.module.css
 │   │   ├── Message.module.css
-│   │   └── ImageUpload.module.css
+│   │   ├── ImageUpload.module.css
+│   │   └── Whiteboard.module.css
 │   ├── App.jsx               # Main app component
 │   ├── index.css             # Global styles
 │   └── main.jsx              # Entry point
@@ -174,7 +211,9 @@ math-tutor/
 
 ## Development Status
 
-### Completed (11/11 Core PRs) ✅
+### Completed (12/14 PRs) ✅
+
+**Core MVP (11/11):**
 - ✅ PR-001: Project setup and structure
 - ✅ PR-002: Image upload and parsing integration
 - ✅ PR-003: Basic chat UI
@@ -187,11 +226,17 @@ math-tutor/
 - ✅ PR-010: Documentation
 - ✅ PR-011: Deployment and demo video (DEPLOYED TO PRODUCTION)
 
-**🎉 Core MVP Complete!** See [docs/task-list.md](../docs/task-list.md) for stretch features (PRs 012-014).
+**Stretch Features (1/3):**
+- ✅ PR-012: Interactive Whiteboard (Excalidraw integration)
+- ⏸️ PR-013: Voice Interface (not implemented)
+- ⏸️ PR-014: Step Visualization (not implemented)
+
+**🎉 Core MVP Complete + Whiteboard!** See [docs/task-list.md](../docs/task-list.md) for full status.
 
 ## Available Scripts
 
-- `npm run dev` - Start development server (Vite)
+- `vercel dev --listen 3000` - Start full development server with API and whiteboard
+- `npm run dev` - Start Vite dev server (basic features only)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint (if configured)
@@ -325,15 +370,16 @@ Note: Costs may vary based on conversation length and problem complexity.
 2. **Image Quality**: Handwritten problems may have lower OCR accuracy than printed text
 3. **Advanced Math**: System validated on K-12 and early college math; advanced topics may need prompt refinement
 4. **Calculator Limitations**: Safe expression parser supports basic arithmetic only (no symbolic algebra)
+5. **Whiteboard Bundle Size**: Excalidraw adds ~2MB to bundle, exceeding Vercel free tier limits (see Deployment section)
 
 ## Future Improvements
 
-Potential enhancements (see PR-012-014 in task list):
-- Interactive whiteboard for visual explanations
+Potential enhancements (see PR-013-014 in task list):
 - Voice interface (text-to-speech and speech-to-text)
 - Step-by-step visualization with animations
 - Multi-language support
 - Problem type detection and specialized prompts
+- Whiteboard OCR integration (allow tutor to read canvas)
 
 ## Contributing
 
