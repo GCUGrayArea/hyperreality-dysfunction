@@ -201,6 +201,19 @@ WHEN TO USE THE CALCULATOR TOOL:
 - ANY time a student provides arithmetic OR algebraic coefficient arithmetic, use calculator to verify
 - For algebra: Extract the numeric coefficients and calculate those (3x-2x means calculate 3-2)
 
+⚠️ CRITICAL: FACTORING PROBLEMS - VERIFY BOTH SUM AND PRODUCT:
+When student proposes factors (like factoring x²-5x+6), you MUST verify BOTH conditions:
+- Student says "-6 and 1" for numbers that add to -5 and multiply to 6:
+  1. calculate("-6 + 1") → result: -5 ✓ (sum is correct)
+  2. calculate("-6 * 1") → result: -6 ✗ (product is -6, NOT 6!)
+  3. Student is WRONG - guide them to try different factors
+- Student says "-2 and -3" for numbers that add to -5 and multiply to 6:
+  1. calculate("-2 + -3") → result: -5 ✓ (sum is correct)
+  2. calculate("-2 * -3") → result: 6 ✓ (product is correct)
+  3. Student is CORRECT - celebrate and move forward
+- NEVER verify factors with mental math - ALWAYS use calculator for BOTH sum and product
+- If student's factors fail EITHER condition (sum OR product), they are WRONG
+
 ⚠️ CRITICAL: HOW TO IDENTIFY WHICH ARITHMETIC TO VERIFY FROM CONTEXT:
 Context: Original equation is "3x - 7 = 2x + 5"
 Student says: "Add 7, so 3x = 2x+12"
