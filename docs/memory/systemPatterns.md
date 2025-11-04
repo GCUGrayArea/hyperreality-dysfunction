@@ -681,3 +681,47 @@ metadata.isNewProblem  // true/false based on conversation context
 4. **Iterate on structure, not just prompts**: After 3 prompt iterations, consider architectural changes
 5. **Log tool usage**: Essential for debugging LLM function calling
 6. **JSON mode is often sufficient**: Don't over-engineer with strict schemas unless needed
+
+---
+
+## Known Limitations
+
+### JavaScript Number Precision (IEEE 754 Float64)
+
+**Issue**: The calculator tool (`mathEvaluator.js`) uses JavaScript's standard `Number` type, which is a 64-bit floating-point format (IEEE 754 double precision). This loses integer precision beyond 2^53 - 1 (approximately 9 quadrillion).
+
+**Example of the problem**:
+```
+Problem: Factor 12345678987654321
+Student suggests: 111111111 (correct square root)
+Calculator checks: 111111111 * 111111111
+Result returned: 12345678987654320 (off by 1)
+```
+
+**Why this happens**:
+- JavaScript can only represent integers exactly up to `Number.MAX_SAFE_INTEGER` (9,007,199,254,740,991)
+- Beyond that, floating-point representation introduces rounding errors
+- `12345678987654321` exceeds this limit, so arithmetic operations lose precision
+
+**Impact**:
+- Problems involving very large integers (>15-16 digits) may have verification failures
+- Student provides correct answer, but calculator thinks it's wrong
+- Most educational math problems stay well below this threshold
+
+**Not fixing because**:
+1. Educational math problems rarely use numbers this large
+2. Alternative (BigInt) would require rewriting expression evaluator
+3. expr-eval library doesn't support BigInt
+4. Would add complexity for edge case benefit
+5. Known limitation can be documented for users
+
+**Workaround for users**:
+- Keep problems to reasonable integer sizes (<15 digits)
+- For very large number problems, tutor can acknowledge the limitation
+
+**Technical details**:
+- Safe integer range: -(2^53 - 1) to (2^53 - 1)
+- In decimal: -9,007,199,254,740,991 to 9,007,199,254,740,991
+- Numbers outside this range may have precision errors in arithmetic
+
+**Documented**: 2025-11-04
