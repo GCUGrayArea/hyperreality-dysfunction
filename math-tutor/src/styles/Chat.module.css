@@ -16,6 +16,19 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* PR-012: Header layout with whiteboard button */
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.headerTop > div {
+  flex: 1;
+}
+
 .title {
   margin: 0;
   font-size: 1.75rem;
@@ -27,6 +40,42 @@
   font-size: 1rem;
   opacity: 0.9;
   font-weight: 400;
+}
+
+/* PR-012: Whiteboard toggle button */
+.whiteboardToggle {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.whiteboardToggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.whiteboardToggle:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+/* PR-012: Whiteboard backdrop overlay */
+.whiteboardBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
 }
 
 /* PR-006: Current problem indicator */
@@ -236,12 +285,22 @@
     padding: 1rem;
   }
 
+  .headerTop {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
   .title {
     font-size: 1.5rem;
   }
 
   .subtitle {
     font-size: 0.875rem;
+  }
+
+  .whiteboardToggle {
+    width: 100%;
   }
 
   .imageUploadSection {

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import Message from './Message';
 import ChatInput from './ChatInput';
 import ImageUpload from './ImageUpload';
+import Whiteboard from './Whiteboard';
 import { getSocraticResponse } from '../services/openai';
 import styles from '../styles/Chat.module.css';
 
@@ -30,6 +31,10 @@ export default function Chat() {
   // PR-006: Problem state tracking
   const [currentProblem, setCurrentProblem] = useState(null);
   const [_problemStartIndex, _setProblemStartIndex] = useState(null); // Reserved for future use
+
+  // PR-012: Whiteboard state
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const [whiteboardData, setWhiteboardData] = useState(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -257,11 +262,38 @@ export default function Chat() {
     }
   };
 
+  // PR-012: Whiteboard handlers
+  const handleWhiteboardChange = (data) => {
+    setWhiteboardData(data);
+  };
+
+  const handleWhiteboardClose = () => {
+    setShowWhiteboard(false);
+  };
+
+  const handleWhiteboardToggle = () => {
+    setShowWhiteboard(prev => !prev);
+  };
+
   return (
     <div className={styles.chatContainer} role="main">
       <header className={styles.header}>
-        <h1 className={styles.title}>AI Math Tutor</h1>
-        <p className={styles.subtitle}>Socratic Learning Assistant</p>
+        <div className={styles.headerTop}>
+          <div>
+            <h1 className={styles.title}>AI Math Tutor</h1>
+            <p className={styles.subtitle}>Socratic Learning Assistant</p>
+          </div>
+
+          {/* PR-012: Whiteboard toggle button */}
+          <button
+            onClick={handleWhiteboardToggle}
+            className={styles.whiteboardToggle}
+            aria-label="Toggle whiteboard"
+            title="Open whiteboard for drawing and diagrams"
+          >
+            📐 Whiteboard
+          </button>
+        </div>
 
         {/* PR-006: Current problem indicator */}
         {currentProblem && (
@@ -335,6 +367,22 @@ export default function Chat() {
         disabled={isLoading}
         ref={inputRef}
       />
+
+      {/* PR-012: Whiteboard overlay */}
+      {showWhiteboard && (
+        <>
+          <div
+            className={styles.whiteboardBackdrop}
+            onClick={handleWhiteboardClose}
+            aria-hidden="true"
+          />
+          <Whiteboard
+            initialData={whiteboardData}
+            onChange={handleWhiteboardChange}
+            onClose={handleWhiteboardClose}
+          />
+        </>
+      )}
     </div>
   );
 }
