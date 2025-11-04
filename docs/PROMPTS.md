@@ -1,8 +1,9 @@
 # Prompt Engineering Notes - Socratic Math Tutor
 
-**Last Updated**: 2025-11-03 (PR-006 v1.6 - Complete Information Handling)
+**Last Updated**: 2025-11-03 (PR-009 v1.7 - Factoring Verification Fix)
 **Model**: GPT-4o (via OpenAI API)
-**Temperature**: 0.7
+**Temperature**: 0.3 (lowered for more accurate math verification)
+**Function Calling**: Calculator tool for arithmetic verification
 
 ## Overview
 
@@ -17,6 +18,29 @@ The system prompt is designed to enforce strict Socratic teaching methodology wh
 - **ALWAYS** responds with guiding questions
 - Helps students discover solutions themselves
 - Provides increasingly concrete hints when students are stuck
+- **Verifies all arithmetic using calculator tool** before responding
+
+### Function Calling Architecture (PR-009)
+
+The system uses OpenAI's function calling feature to access a calculator tool for accurate math verification:
+
+**Calculator Tool Definition**:
+- Function name: `calculate`
+- Parameters: `expression` (string)
+- Returns: `{success: boolean, result: number, error?: string}`
+
+**How It Works**:
+1. Student provides answer with arithmetic (e.g., "3 + 7 = 10")
+2. LLM sees prompt requirement to verify with calculator
+3. LLM makes function call: `calculate("3 + 7")`
+4. System evaluates safely and returns: `{success: true, result: 10}`
+5. LLM incorporates result into response (celebrates if correct, guides if wrong)
+
+**Why This Matters**:
+- Prevents false celebration of incorrect answers
+- Catches LLM arithmetic errors (especially with negative numbers, products)
+- Ensures mathematical accuracy before any feedback
+- Critical for factoring problems (must check BOTH sum and product)
 
 ### Prompt Structure
 
@@ -269,10 +293,47 @@ For PR-004 to pass the validation gate, the system must demonstrate:
 - **Before**: "Find area with width 8, height 5" → "What are the dimensions?"
 - **After**: "Find area with width 8, height 5" → "I see we have width 8 and height 5. So we need to find the area."
 
+**v1.7** (2025-11-03, PR-009 - Factoring Verification Fix + Function Calling):
+- **Problem Found**: Test 7 (Quadratic with mistakes) failure - LLM accepted "-6 and 1" as correct factors for x²-5x+6 (needs sum=-5, product=6)
+- **Root Cause**: LLM did mental math instead of using calculator; checked sum (-6+1=-5 ✓) but failed to verify product (-6×1=-6 ✗, NOT 6)
+- **Fix**: Added dedicated factoring verification section to prompt:
+  - ⚠️ CRITICAL: FACTORING PROBLEMS - VERIFY BOTH SUM AND PRODUCT
+  - Explicit examples showing BOTH calculator calls required:
+    - calculate("-6 + 1") → -5 ✓
+    - calculate("-6 * 1") → -6 ✗ (NOT 6! - student is WRONG)
+  - Specific positive example: "-2 and -3" passes BOTH checks
+  - Explicit rule: "NEVER verify factors with mental math - ALWAYS use calculator for BOTH sum and product"
+  - If either condition fails, factors are WRONG
+- **Additional**: Lowered temperature from 0.7 → 0.3 for more consistent calculator usage
+- **Result**: PASS - Correctly catches factoring errors, verifies both conditions
+- **Test Case**: Student says "-6 and 1" → Tutor correctly rejects (product is -6, not 6)
+
+---
+
+## Summary of Techniques Used
+
+Throughout the prompt engineering process, several key techniques proved effective:
+
+1. **Top-Placement of Critical Rules**: Most important constraints (verification protocol) placed at the very top
+2. **Explicit Anti-Examples**: Showing exact failure cases with ❌ markers
+3. **Positive Examples**: Showing correct behavior with ✅ markers
+4. **Visual Emphasis**: Warning emoji (⚠️) to draw attention to critical sections
+5. **Repetition**: Key rules stated multiple times in different sections
+6. **Concrete Examples**: Specific arithmetic examples rather than abstract descriptions
+7. **Function Calling**: Offloading arithmetic verification to deterministic calculator tool
+8. **Temperature Tuning**: Lower temperature (0.3) for more consistent tool usage
+
+**Key Insight**: LLMs prioritize conversational flow over accuracy by default. Verification must be:
+- Placed at the very top of the prompt
+- Stated explicitly with concrete examples
+- Repeated in multiple sections
+- Enforced through function calling (not just instructions)
+
 ---
 
 **Model**: GPT-4o
 **Context Limit**: ~128k tokens
-**Max Response**: 500 tokens
-**Temperature**: 0.7
+**Max Response**: 600 tokens (increased for function calling + JSON response format)
+**Temperature**: 0.3 (lowered from 0.7 for math accuracy)
 **API Version**: OpenAI SDK 6.7.0
+**Function Calling**: Calculator tool with safe expression evaluation
