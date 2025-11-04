@@ -1,102 +1,49 @@
-import OpenAI from 'openai';
 import { z } from 'zod';
-import { evaluateMathExpression } from '../utils/mathEvaluator.js';
 
 /**
  * OpenAI service for image parsing and chat
  * Uses GPT-4 Vision for OCR and GPT-4 for Socratic dialogue
  * PR-009: Added function calling with calculator tool for accurate math verification
  * PR-009: Added structured outputs for conversation state tracking
+ * PR-011: Migrated to backend API proxy for secure API key handling
  */
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Required for client-side usage in MVP
-});
-
-// Model configuration
-const VISION_MODEL = import.meta.env.VITE_OPENAI_VISION_MODEL || 'gpt-4o';
-const CHAT_MODEL = import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o';
+// PR-011: API endpoints (Vercel serverless functions)
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3000';
+const CHAT_API_URL = `${API_BASE_URL}/api/chat`;
+const PARSE_IMAGE_API_URL = `${API_BASE_URL}/api/parse-image`;
 
 /**
- * PR-009: Calculator tool for function calling
- * Allows LLM to verify arithmetic expressions before responding to students
+ * PR-011: Calculator tool and response schema now handled in backend API
+ * See api/chat.js for implementation details
  */
-const CALCULATOR_TOOL = {
-  type: "function",
-  function: {
-    name: "calculate",
-    description: "Safely evaluate a mathematical expression to verify arithmetic. Use this to check if a student's calculation is correct before providing feedback. Supports basic arithmetic: +, -, *, /, parentheses, exponents (^ or **), and common functions like sqrt().",
-    parameters: {
-      type: "object",
-      properties: {
-        expression: {
-          type: "string",
-          description: "The mathematical expression to evaluate (e.g., '3 + 7', '2 * (4 + 5)', '5 + 7', 'sqrt(16)')"
-        }
-      },
-      required: ["expression"]
-    }
-  }
-};
-
-/**
- * PR-009: Zod schema for structured tutor responses
- * Allows LLM to provide conversation state metadata alongside message
- */
-const TutorResponseSchema = z.object({
-  message: z.string().describe("Your Socratic tutor message to display to the student"),
-  metadata: z.object({
-    isNewProblem: z.boolean().describe("True if the student's message introduced a brand new problem to solve (not an answer to your question)"),
-    currentProblemText: z.string().nullable().describe("The text of the current problem being worked on, or null if no active problem"),
-    studentAnswerCorrect: z.boolean().nullable().describe("True if student's last answer was correct, false if wrong, null if no answer to evaluate"),
-    problemComplete: z.boolean().describe("True if the student has fully solved the current problem")
-  }).describe("Metadata about the conversation state")
-});
 
 /**
  * Parse math problem from image using GPT-4 Vision
+ * PR-011: Now calls backend API proxy for secure API key handling
  * @param {string} imageUrl - Base64 data URL or image URL
  * @returns {Promise<{text: string, success: boolean, error?: string}>}
  */
 export async function parseImageToText(imageUrl) {
   try {
-    const response = await openai.chat.completions.create({
-      model: VISION_MODEL,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Extract the math problem from this image. Return ONLY the mathematical text exactly as it appears, preserving equations, numbers, and symbols. If there are multiple problems, extract all of them. Do not add explanations or commentary.'
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: imageUrl
-              }
-            }
-          ]
-        }
-      ],
-      max_tokens: 500
+    const response = await fetch(PARSE_IMAGE_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ imageUrl })
     });
 
-    const extractedText = response.choices[0]?.message?.content?.trim();
-
-    if (!extractedText) {
+    if (!response.ok) {
+      const errorData = await response.json();
       return {
         success: false,
-        error: 'No text could be extracted from the image'
+        error: errorData.error || 'Failed to parse image'
       };
     }
 
-    return {
-      success: true,
-      text: extractedText
-    };
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error parsing image:', error);
     return {
@@ -366,9 +313,10 @@ Remember: Your success is measured by the student discovering the answer themsel
 /**
  * Send message to Socratic math tutor and get response
  * PR-009: Enhanced with function calling for calculator tool
+ * PR-011: Now calls backend API proxy for secure API key handling
  * @param {Array} conversationHistory - Array of {role, content} messages
  * @param {number} stuckCount - Number of consecutive wrong answers (for hint progression)
- * @returns {Promise<{content: string, success: boolean, error?: string, usedCalculator?: boolean}>}
+ * @returns {Promise<{content: string, success: boolean, error?: string, usedCalculator?: boolean, metadata?: object}>}
  */
 export async function getSocraticResponse(conversationHistory, stuckCount = 0) {
   try {
@@ -381,108 +329,29 @@ export async function getSocraticResponse(conversationHistory, stuckCount = 0) {
       systemPrompt += `\n\n⚠️ HINT PROGRESSION (Stuck Count: ${stuckCount}): Student has given ${stuckCount} wrong answers. Start providing more specific hints as questions.`;
     }
 
-    // Prepend system message with Socratic prompt (enhanced with hint progression)
-    const messages = [
-      {
-        role: 'system',
-        content: systemPrompt
+    // Call backend API with conversation history and system prompt
+    const response = await fetch(CHAT_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
       },
-      ...conversationHistory
-    ];
-
-    // PR-009: FIRST API CALL - with calculator tool available and JSON response format
-    let response = await openai.chat.completions.create({
-      model: CHAT_MODEL,
-      messages: messages,
-      tools: [CALCULATOR_TOOL],
-      tool_choice: "auto", // Let LLM decide when to use calculator
-      response_format: { type: "json_object" }, // Require JSON response
-      temperature: 0.3, // Lower temperature for more accurate math verification
-      max_tokens: 600 // Increased for JSON overhead
+      body: JSON.stringify({
+        messages: conversationHistory,
+        systemPrompt: systemPrompt,
+        stuckCount: stuckCount
+      })
     });
 
-    let message = response.choices[0]?.message;
-    let usedCalculator = false;
-
-    // PR-009: CHECK FOR TOOL CALLS (calculator usage)
-    if (message.tool_calls) {
-      usedCalculator = true;
-      console.log('🧮 LLM is using calculator to verify math');
-
-      // Execute each tool call
-      const toolResults = [];
-      for (const toolCall of message.tool_calls) {
-        if (toolCall.function.name === "calculate") {
-          const args = JSON.parse(toolCall.function.arguments);
-          console.log(`  Calculating: ${args.expression}`);
-
-          const calcResult = evaluateMathExpression(args.expression);
-          console.log(`  Result:`, calcResult);
-
-          toolResults.push({
-            tool_call_id: toolCall.id,
-            role: "tool",
-            content: JSON.stringify(calcResult)
-          });
-        }
-      }
-
-      // PR-009: SECOND API CALL - with tool results and JSON response format
-      response = await openai.chat.completions.create({
-        model: CHAT_MODEL,
-        messages: [
-          ...messages,
-          message, // Include the assistant's tool call message
-          ...toolResults // Add tool results
-        ],
-        response_format: { type: "json_object" }, // Require JSON response
-        temperature: 0.3,
-        max_tokens: 600 // Increased for JSON overhead
-      });
-
-      message = response.choices[0]?.message;
-    }
-
-    const content = message?.content?.trim();
-
-    if (!content) {
+    if (!response.ok) {
+      const errorData = await response.json();
       return {
         success: false,
-        error: 'No response generated'
+        error: errorData.error || 'Failed to get response'
       };
     }
 
-    // PR-009: Parse JSON response to extract message and metadata
-    try {
-      const parsed = JSON.parse(content);
-
-      // Validate the response has required fields
-      if (!parsed.message || !parsed.metadata) {
-        console.warn('LLM response missing required fields, using raw content');
-        return {
-          success: true,
-          content: content,
-          usedCalculator: usedCalculator,
-          metadata: null
-        };
-      }
-
-      return {
-        success: true,
-        content: parsed.message, // The actual message to display
-        metadata: parsed.metadata, // Conversation state metadata
-        usedCalculator: usedCalculator
-      };
-    } catch (parseError) {
-      console.error('Failed to parse JSON response:', parseError);
-      // Fallback: return raw content if JSON parsing fails
-      return {
-        success: true,
-        content: content,
-        usedCalculator: usedCalculator,
-        metadata: null
-      };
-    }
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error getting Socratic response:', error);
     return {

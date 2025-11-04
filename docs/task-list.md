@@ -7,10 +7,23 @@
 ## PR Status Overview
 
 Total PRs: 14 (11 core + 3 optional)
-- Not Started: 5
+- Not Started: 3 (PR-012, PR-013, PR-014 - all stretch features)
 - In Progress: 0
-- Complete: 9 (PR-001, PR-002, PR-003, PR-004 ✅ VALIDATED, PR-005, PR-006, PR-007, PR-008, PR-009 ✅)
+- Complete: 11 (All core PRs ✅)
+  - PR-001: Project Setup ✅
+  - PR-002: Image Upload ✅
+  - PR-003: Chat UI ✅
+  - PR-004: Socratic Prompts ✅ VALIDATED
+  - PR-005: Response Evaluation ✅
+  - PR-006: Context Management ✅
+  - PR-007: Math Rendering ✅
+  - PR-008: UI Polish ✅
+  - PR-009: Multi-Problem Testing ✅
+  - PR-010: Documentation ✅
+  - PR-011: Deployment ✅ PRODUCTION READY
 - Blocked: 0
+
+**🎉 CORE MVP COMPLETE!** - Live at https://math-tutor-go4eke7pc-grays-projects-783dc481.vercel.app
 
 ## Critical Path
 
@@ -496,11 +509,12 @@ Test system on 5+ different problem types, identify and fix bugs, ensure Socrati
 ## Day 5: Documentation & Deploy (PRs 010-011)
 
 ### PR-010: Documentation
-**Status**: Not Started
+**Status**: Complete ✅
 **Priority**: P0
-**Estimated**: 2-3 hours
-**Assigned**: Unassigned
-**Dependencies**: PR-009
+**Estimated**: 2-3 hours (Actual: ~2 hours)
+**Assigned**: Agent White
+**Completed**: 2025-11-03
+**Dependencies**: PR-009 ✅
 
 **Description**:
 Complete all project documentation including setup, examples, and prompt engineering notes.
@@ -508,67 +522,100 @@ Complete all project documentation including setup, examples, and prompt enginee
 **Scope**:
 - Complete README.md with full setup instructions
 - Create EXAMPLES.md with 5+ problem walkthroughs
-- Create PROMPTS.md with prompt engineering notes
-- Create API.md if applicable
+- Update PROMPTS.md with prompt engineering notes
 - Document technical decisions made
 - Add code comments for complex logic
 
 **Deliverables**:
-- [ ] README.md: Setup, tech stack, architecture
-- [ ] EXAMPLES.md: 5+ example conversations
-- [ ] PROMPTS.md: Prompt engineering notes, iterations, what worked/didn't
-- [ ] API.md: API documentation (if applicable)
-- [ ] Updated PRD decision log
-- [ ] Code comments for complex sections
+- [x] README.md: Setup, tech stack, architecture ✅
+- [x] EXAMPLES.md: 8 example conversations (exceeded minimum) ✅
+- [x] PROMPTS.md: Prompt engineering notes v1.0-1.7, function calling ✅
+- [x] Code comments: Already adequate in all key files ✅
+- [x] API.md: Not needed (API usage covered in README and PROMPTS) ✅
 
-**Files**:
-- `README.md`
-- `docs/EXAMPLES.md`
-- `docs/PROMPTS.md`
-- `docs/API.md` (if applicable)
-- Updated `docs/prd.md` (decision log)
-- Code comments throughout
+**Files Created/Updated**:
+- `math-tutor/README.md` - Complete rewrite with full feature list, setup, architecture
+- `docs/EXAMPLES.md` - NEW: 8 example conversations showing Socratic dialogue
+- `docs/PROMPTS.md` - Updated with v1.7, function calling, temperature change
+
+**Key Documentation**:
+- 8 example conversations (all problem types)
+- Complete prompt iteration history (v1.0 → v1.7)
+- Function calling architecture documented
+- Setup instructions, API costs, limitations
+- Supported problem types with examples
 
 ---
 
 ### PR-011: Deployment and Demo Video
-**Status**: Not Started
-**Priority**: P0
-**Estimated**: 2-3 hours
-**Assigned**: Unassigned
-**Dependencies**: PR-010
+**Status**: Complete
+**Priority**: P0 (Critical Path)
+**Estimated**: 2-3 hours (actual: 4-5 hours due to backend work)
+**Assigned**: Agent White
+**Completed**: 2025-11-04
+**Dependencies**: PR-010 ✅ Complete
 
 **Description**:
-Deploy application and create demo video showing all core features.
+Deploy application to Vercel with secure serverless function architecture and create demo video showing all core features.
 
 **Scope**:
-- Choose deployment platform (or finalize local setup)
-- Deploy application OR create clear local setup instructions
-- Record 5-minute demo video
-- Test deployed version
-- Final QA
+- ✅ Create Vercel serverless functions for API proxy
+- ✅ Secure API key handling (server-side only, no VITE_ prefix)
+- ✅ Deploy to Vercel production
+- ✅ Configure environment variables
+- ✅ Create comprehensive documentation
+- ✅ Create demo video script
+- ✅ Final QA checklist
 
-**Technical Decisions Required**:
-- [ ] Deployment platform (Vercel, Netlify, Railway, or local-only)
-- [ ] Environment variable setup for production
-- [ ] Demo video recording approach
+**Technical Decisions Made**:
+- [x] Deployment platform - **Vercel** (serverless functions + static hosting)
+- [x] Environment variable setup - **Server-side only** (no VITE_ prefix for security)
+- [x] API architecture - **Serverless function proxy** (keeps API keys secure)
+- [x] CORS handling - **Configured in vercel.json**
+- [x] Demo video recording approach - **Script provided for user to record**
 
 **Demo Video Content** (5 minutes):
-- [ ] Introduction and overview
-- [ ] Text input workflow
-- [ ] Image upload and parsing
-- [ ] Full Socratic dialogue on a problem
-- [ ] Math rendering showcase
-- [ ] Stretch feature (if implemented)
+- [x] Introduction and overview (script provided)
+- [x] Text input workflow (script provided)
+- [x] Image upload and parsing (script provided)
+- [x] Full Socratic dialogue on a problem (script provided)
+- [x] Math rendering showcase (script provided)
+- [x] Error handling demo (script provided)
+- [ ] **User Action Required**: Record and upload video following script
 
 **Deliverables**:
-- [ ] Deployed application URL OR clear local setup docs
-- [ ] 5-minute demo video
-- [ ] Final QA checklist completed
-- [ ] Production environment configured
+- [x] Deployed application URL: https://math-tutor-go4eke7pc-grays-projects-783dc481.vercel.app
+- [x] Production environment configured (Vercel dashboard)
+- [x] Final QA checklist completed (docs/QA-CHECKLIST-PR-011.md)
+- [x] Demo video script (docs/DEMO-VIDEO-SCRIPT.md)
+- [ ] **User Action Required**: 5-minute demo video recording
 
-**Files**:
-- Deployment configuration
+**Files Created/Modified**:
+- `math-tutor/api/chat.js` - Chat API serverless function
+- `math-tutor/api/parse-image.js` - Image parsing API serverless function
+- `math-tutor/vercel.json` - Vercel deployment configuration
+- `math-tutor/src/services/openai.js` - Updated to use backend API
+- `math-tutor/.env.example` - Updated with new variable names
+- `math-tutor/README.md` - Added deployment section and live demo URL
+- `docs/DEPLOYMENT.md` - Comprehensive deployment guide
+- `docs/DEMO-VIDEO-SCRIPT.md` - Complete demo video script
+- `docs/QA-CHECKLIST-PR-011.md` - Final QA checklist
+
+**Architecture Changes**:
+- **Before (PR-001)**: Client-side SPA with direct OpenAI SDK calls (API key exposed)
+- **After (PR-011)**: Client-side SPA + Vercel Serverless Functions proxy (API key secure)
+
+**Security Improvements**:
+- ✅ API keys stored server-side only (environment variables without VITE_ prefix)
+- ✅ No API key exposure in client bundle or network requests
+- ✅ CORS headers properly configured
+- ✅ Production-ready architecture
+
+**Notes**:
+- Core MVP deployment complete and accessible
+- User needs to record demo video following provided script
+- All documentation complete and accurate
+- Ready for stretch features (PR-012-014) or project wrap-up
 - Demo video file
 - Updated README with deployment link/instructions
 - Production environment setup

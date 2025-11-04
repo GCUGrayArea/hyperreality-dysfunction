@@ -21,14 +21,22 @@ An AI-powered math tutor that uses the Socratic method to guide students through
 - **Accessibility**: ARIA labels, semantic HTML, screen reader support
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 
+## Live Demo
+
+🚀 **Production URL**: https://math-tutor-go4eke7pc-grays-projects-783dc481.vercel.app
+
+Try it now - no API key required!
+
 ## Tech Stack
 
-- **Frontend**: React 18.3 + Vite 6.0
-- **LLM**: OpenAI GPT-4o (with Vision for image parsing)
-- **Math Rendering**: KaTeX 0.16.11
+- **Frontend**: React 19.1 + Vite 7.1
+- **Backend**: Vercel Serverless Functions (Node.js)
+- **LLM**: OpenAI GPT-4o-mini (with Vision for image parsing)
+- **Math Rendering**: KaTeX 0.16.25
 - **Styling**: CSS Modules
 - **Function Calling**: OpenAI SDK 6.7.0 with calculator tool integration
-- **Math Evaluation**: Custom expression parser with safe evaluation
+- **Math Evaluation**: expr-eval 2.0.2 for safe expression parsing
+- **Deployment**: Vercel
 
 ## Setup
 
@@ -57,17 +65,22 @@ cp .env.example .env
 
 Edit `.env` and add your OpenAI API key:
 ```env
-VITE_OPENAI_API_KEY=your_actual_api_key_here
-VITE_OPENAI_MODEL=gpt-4o
-VITE_OPENAI_VISION_MODEL=gpt-4o
+OPENAI_API_KEY=your_actual_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_VISION_MODEL=gpt-4o-mini
 ```
 
-4. **Start the development server**
+**Note**: For local development with Vercel CLI, use:
+```bash
+vercel dev
+```
+
+Or for standard Vite dev server (requires client-side API key):
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+The application will be available at `http://localhost:3000` (Vercel) or `http://localhost:5173` (Vite)
 
 ## Usage
 
@@ -94,10 +107,46 @@ The tutor has been validated on:
 - ✅ Quadratic equations (e.g., "x² - 5x + 6 = 0")
 - ✅ Basic calculus (e.g., "Find derivative of 3x² + 2x")
 
+## Deployment
+
+### Deploy Your Own Instance
+
+1. **Push to GitHub**
+```bash
+git push origin main
+```
+
+2. **Deploy to Vercel**
+```bash
+cd math-tutor
+vercel --prod
+```
+
+3. **Add Environment Variables in Vercel Dashboard**
+
+Go to your project settings → Environment Variables and add:
+- `OPENAI_API_KEY` - Your OpenAI API key
+- `OPENAI_MODEL` - `gpt-4o-mini` (optional, has default)
+- `OPENAI_VISION_MODEL` - `gpt-4o-mini` (optional, has default)
+
+Select "Production", "Preview", and "Development" for all variables.
+
+4. **Redeploy**
+```bash
+vercel --prod
+```
+
+Your app will be live at your Vercel URL!
+
+For detailed deployment instructions, see [DEPLOYMENT.md](../docs/DEPLOYMENT.md).
+
 ## Project Structure
 
 ```
 math-tutor/
+├── api/                      # Vercel Serverless Functions (PR-011)
+│   ├── chat.js               # Chat API proxy with calculator tool
+│   └── parse-image.js        # Image parsing API proxy
 ├── src/
 │   ├── components/           # React components
 │   │   ├── Chat.jsx          # Main chat container
@@ -105,7 +154,7 @@ math-tutor/
 │   │   ├── Message.jsx       # Message display component
 │   │   └── ImageUpload.jsx   # Image upload component
 │   ├── services/             # API integration
-│   │   └── openai.js         # OpenAI service (Vision, Chat, Function Calling)
+│   │   └── openai.js         # Frontend API client (calls backend)
 │   ├── utils/                # Utility functions
 │   │   ├── latexRenderer.js  # LaTeX parsing and KaTeX rendering
 │   │   └── mathEvaluator.js  # Safe math expression evaluation
@@ -118,13 +167,14 @@ math-tutor/
 │   ├── index.css             # Global styles
 │   └── main.jsx              # Entry point
 ├── .env.example              # Environment variable template
+├── vercel.json               # Vercel deployment configuration (PR-011)
 ├── package.json              # Dependencies and scripts
 └── README.md                 # This file
 ```
 
 ## Development Status
 
-### Completed (9/11 Core PRs)
+### Completed (11/11 Core PRs) ✅
 - ✅ PR-001: Project setup and structure
 - ✅ PR-002: Image upload and parsing integration
 - ✅ PR-003: Basic chat UI
@@ -134,12 +184,10 @@ math-tutor/
 - ✅ PR-007: Math rendering integration (KaTeX)
 - ✅ PR-008: UI polish and error handling
 - ✅ PR-009: Multi-problem testing and fixes (ALL TESTS PASS)
+- ✅ PR-010: Documentation
+- ✅ PR-011: Deployment and demo video (DEPLOYED TO PRODUCTION)
 
-### Next Steps
-- ⏳ PR-010: Documentation (current)
-- ⏳ PR-011: Deployment and demo video
-
-See [docs/task-list.md](../docs/task-list.md) for full development roadmap.
+**🎉 Core MVP Complete!** See [docs/task-list.md](../docs/task-list.md) for stretch features (PRs 012-014).
 
 ## Available Scripts
 
@@ -159,6 +207,23 @@ See [docs/task-list.md](../docs/task-list.md) for full development roadmap.
 
 ## Architecture Highlights
 
+### Secure API Proxy Architecture (PR-011)
+The application uses a secure backend proxy to protect API keys:
+
+```
+Browser (React)
+    ↓ fetch('/api/chat')
+Vercel Serverless Function
+    ↓ OpenAI API (with server-side key)
+OpenAI GPT-4o-mini
+```
+
+**Security Benefits:**
+- ✅ API keys never exposed to client-side code
+- ✅ No `VITE_` prefix (keys stay server-side only)
+- ✅ Production-ready deployment architecture
+- ✅ Rate limiting and cost control at backend level
+
 ### Socratic Prompt Engineering
 The system uses a carefully engineered prompt (v1.7) that:
 - Prohibits giving direct answers through multiple explicit rules
@@ -171,7 +236,7 @@ See [docs/PROMPTS.md](../docs/PROMPTS.md) for full prompt engineering details an
 ### Function Calling Architecture
 The tutor uses OpenAI's function calling feature to access a calculator tool:
 1. Student provides answer with arithmetic (e.g., "3 + 7 = 10")
-2. LLM calls `calculate("3 + 7")` to verify
+2. LLM calls `calculate("3 + 7")` to verify (server-side)
 3. LLM receives result: `{success: true, result: 10}`
 4. LLM responds based on verification (celebrates if correct, guides if wrong)
 

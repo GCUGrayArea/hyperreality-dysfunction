@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -Command '$sound = New-Object System.Media.SoundPlayer(\"\"$env:USERPROFILE\\.claude\\24 ring tone.wav\"\"); $sound.Play(); Start-Sleep -Seconds 2')"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
