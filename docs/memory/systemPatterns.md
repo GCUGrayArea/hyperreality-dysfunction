@@ -467,3 +467,217 @@ Ask tutor about equation like "2x + 5 = 13" and verify:
 - Copy-rendered-equation functionality
 - Support for `\(...\)` and `\[...\]` delimiters (only `$` supported now)
 - Math rendering in image parsing (currently only in chat messages)
+
+---
+
+## PR-009 Patterns: LLM-Based Classification & Function Calling
+
+**Last Updated**: 2025-11-03
+**Status**: WIP - Core functionality working, extended tests pending
+
+### Key Architectural Decisions
+
+**1. Structured Outputs Over Client-Side Heuristics**
+
+**Problem**: Client-side regex patterns for classifying user messages (new problem vs. answer) were brittle and context-unaware.
+- "What is 1/3+1/4?" → New problem ✓
+- "1/3*4/4=4/12" → Detected as new problem ✗ (actually showing work)
+- "7/12. I said that." → Detected as new problem ✗ (answer + frustration)
+
+**Solution**: LLM returns structured metadata alongside message
+```javascript
+{
+  message: "Your Socratic tutor message...",
+  metadata: {
+    isNewProblem: false,           // LLM decides based on context
+    currentProblemText: "What is 1/3+1/4?",
+    studentAnswerCorrect: true,
+    problemComplete: false
+  }
+}
+```
+
+**Implementation**:
+- JSON response format: `response_format: { type: "json_object" }`
+- System prompt includes JSON structure requirements
+- Client parses JSON and uses metadata for state management
+- Fallback to raw content if JSON parsing fails
+
+**Why This Works**:
+- LLM has full conversation context
+- Can distinguish intent ("work" vs "new problem")
+- No maintenance of complex regex patterns
+- Handles edge cases naturally
+
+**2. Function Calling for Deterministic Operations**
+
+**Problem**: LLM making arithmetic errors despite low temperature and explicit prompting
+- "3+7=9" accepted as correct (Bug #2)
+- "5+7" questioned when student said "2x+12" (Bug #4)
+- Temperature reduction (0.7→0.3) and extensive prompting didn't fully solve it
+
+**Solution**: Give LLM a calculator tool to verify ALL arithmetic
+```javascript
+const CALCULATOR_TOOL = {
+  type: "function",
+  function: {
+    name: "calculate",
+    description: "Safely evaluate mathematical expression...",
+    parameters: { expression: { type: "string" } }
+  }
+};
+```
+
+**Implementation**:
+- `src/utils/mathEvaluator.js` - Safe expression evaluator using expr-eval
+- Function calling roundtrip: API call → tool use → execute locally → second API call
+- Calculator result is authoritative (prompt emphasizes trust)
+- Console logging for diagnostics (`🧮 LLM is using calculator`)
+
+**Why This Works**:
+- 100% accuracy on arithmetic (delegated to JavaScript)
+- LLM knows when it's verified vs. guessed
+- Can verify algebraic coefficients (3x-2x → calculate 3-2)
+- Removes burden of mental math from LLM
+
+**3. Prompt Engineering Has Diminishing Returns**
+
+**Evolution**:
+1. Initial prompt: Basic Socratic method
+2. Bug fixes: Added explicit arithmetic examples (3+7=10, 5+7=12...)
+3. More bug fixes: Added anti-redundancy rules with examples
+4. Even more fixes: Added frustration detection
+5. Final realization: Structural solutions (tools + metadata) more reliable
+
+**Lesson**: After ~3 iterations of prompt refinement for a specific issue, consider whether a structural change (tool, schema, different model) would be more robust.
+
+**What Worked**:
+- High-level method description (Socratic flow)
+- Explicit prohibitions (NEVER give answers)
+- Examples of correct/incorrect behavior
+
+**What Had Limited Impact**:
+- Extensive arithmetic tables (3+7=10, 5+7=12...)
+- Complex conditional rules ("If student says X, then do Y unless...")
+- Repeated emphasis on same points
+
+**4. Console Logging for LLM Diagnostics**
+
+**Pattern**:
+```javascript
+console.log('🧮 LLM is using calculator to verify math');
+console.log(`  Calculating: ${args.expression}`);
+console.log(`  Result:`, calcResult);
+```
+
+**Critical for Debugging**:
+- Revealed "2+7 vs 5+7" misidentification (Bug #4)
+- Showed calculator was called but result ignored (redundancy issue)
+- Confirmed tool invocations working as expected
+
+**Best Practices**:
+- Emoji prefixes for easy scanning (🧮 for calculator)
+- Log inputs and outputs of tool calls
+- Keep in production for user debugging
+- Remove only obviously superfluous logs
+
+**5. Offload Classification to LLM When Possible**
+
+**Anti-Pattern**: Building complex client-side classifiers when LLM already has the context
+
+**Example from this PR**:
+```javascript
+// BEFORE: Complex regex patterns
+const detectNewProblem = (msg) => {
+  if (msg.length <= 10) return false;
+  if (/I (just )?said/i.test(msg)) return false;
+  if (/solve for/i.test(msg)) return true;
+  if (/\d+[a-z]\s*[+\-*]/\s*\d+\s*=/.test(msg)) return true;
+  // ... 30+ more lines of heuristics
+};
+
+// AFTER: LLM decides
+metadata.isNewProblem  // true/false based on conversation context
+```
+
+**When Client-Side Classification Makes Sense**:
+- Routing before LLM call (e.g., image vs. text input)
+- Performance-critical decisions (avoid extra API call)
+- Privacy concerns (don't send data to LLM)
+- Very simple, deterministic rules (e.g., email format validation)
+
+**When to Use LLM**:
+- Requires understanding context
+- Intent-based classification
+- Edge cases are common
+- Rules would be complex/fragile
+
+**6. JSON Mode vs. Strict Schema Validation**
+
+**Decision**: Used JSON mode (`response_format: { type: "json_object" }`) with prompt-based structure rather than strict Zod schema validation
+
+**Rationale**:
+- Simpler implementation
+- Prompt instructions sufficient for basic structure
+- Fallback to raw content if parsing fails
+- Can add Zod validation later if needed
+
+**When to Add Strict Validation**:
+- Frequent parsing errors in production
+- Complex nested structures
+- Multiple schema versions
+- Strict type safety requirements
+
+### Dependencies Added
+
+**zod** (v3.22+):
+- Schema validation library
+- Currently imported but not actively used (reserved for future strict validation)
+- Minimal bundle impact (~30KB)
+
+**expr-eval** (v2.0+):
+- Safe math expression evaluator
+- No use of `eval()` - secure parsing
+- Supports arithmetic, algebraic operations, functions (sqrt, etc.)
+- ~10KB bundle impact
+
+### Integration with Existing Patterns
+
+**Builds on PR-005 (Response Evaluation)**:
+- Removed brittle `detectWrongAnswer()` and `detectCorrectAnswer()` heuristics
+- Now uses `metadata.studentAnswerCorrect` from LLM
+- Stuck count still tracked for hint progression
+
+**Builds on PR-006 (Context Management)**:
+- Removed `detectNewProblem()` client-side function
+- Now uses `metadata.isNewProblem` from LLM
+- Problem state tracking more accurate
+
+**Compatible with PR-007 (Math Rendering)**:
+- LLM still outputs LaTeX notation
+- Rendering layer unchanged
+- Calculator results don't affect display format
+
+### Testing Insights
+
+**What We Learned**:
+1. **Test with console open**: Calculator logs revealed issues prompts couldn't
+2. **Test incrementally**: Fixed one bug at a time, re-tested each
+3. **User frustration is a signal**: "I said that" indicates redundancy bug
+4. **Calculator usage patterns**: LLM called calculator even when result was wrong calculation (2+7 instead of 5+7)
+
+**Test Results**:
+- Bug #2 (Math errors): ✅ Fixed with calculator tool
+- Bug #4 (Algebra verification): ✅ Fixed with calculator + prompt strengthening
+- Bug #6 (Fraction false positives): ✅ Fixed with structured outputs
+- User quirk (LCD conversion): ✅ Fixed with LLM-based problem detection
+- Bug #1 (Redundancy): 🟡 Improved but not eliminated
+
+### Lessons for Future Development
+
+1. **Start with structured outputs**: Don't wait until you have classification bugs
+2. **Use tools for determinism**: If you need 100% accuracy, don't rely on LLM prompting alone
+3. **Let LLM classify when it has context**: Offload to LLM unless there's a specific reason not to
+4. **Iterate on structure, not just prompts**: After 3 prompt iterations, consider architectural changes
+5. **Log tool usage**: Essential for debugging LLM function calling
+6. **JSON mode is often sufficient**: Don't over-engineer with strict schemas unless needed
