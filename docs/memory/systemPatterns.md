@@ -1,7 +1,7 @@
 # System Patterns
 
-**Last Updated**: 2025-11-03 (PR-004)
-**Status**: LLM integrated, Socratic dialogue implemented
+**Last Updated**: 2025-11-04 (PR-012)
+**Status**: Whiteboard stretch feature added
 **Updated By**: Agent White
 
 ## Architecture Decisions
@@ -723,5 +723,118 @@ Result returned: 12345678987654320 (off by 1)
 - Safe integer range: -(2^53 - 1) to (2^53 - 1)
 - In decimal: -9,007,199,254,740,991 to 9,007,199,254,740,991
 - Numbers outside this range may have precision errors in arithmetic
+
+**Documented**: 2025-11-04
+
+## PR-012 Patterns: Interactive Whiteboard (Stretch Feature)
+
+### Whiteboard Component Pattern
+
+**Component**: `Whiteboard.jsx`
+- Wraps Excalidraw library
+- Fixed position overlay (z-index: 1000)
+- Modal pattern with close button
+- Controlled component receiving initial data and onChange callback
+
+**Props**:
+```javascript
+{
+  initialData: Object,     // Excalidraw scene data for persistence
+  onChange: Function,      // Callback when canvas changes
+  onClose: Function        // Callback when user closes whiteboard
+}
+```
+
+### Integration Pattern
+
+**Toggle Flow**:
+1. User clicks "📐 Whiteboard" button in header
+2. Chat component sets `showWhiteboard` to true
+3. Backdrop overlay dims the background
+4. Whiteboard modal appears centered on screen
+5. User draws/edits on canvas
+6. Canvas state saved on every change via onChange callback
+7. User closes whiteboard (X button or backdrop click)
+8. State persisted in Chat component for reopening
+
+**State Management**:
+- `showWhiteboard` (boolean) - controls visibility
+- `whiteboardData` (object) - stores Excalidraw scene data
+- State lives in Chat component (parent)
+- Persists across open/close within same session
+- Resets on page refresh (no backend storage)
+
+### UI Pattern
+
+**Layout**:
+- Fixed position: Centers on screen
+- Size: 90vw × 85vh (responsive)
+- Header: Title + close button
+- Canvas area: Fills remaining space
+- Backdrop: Darkened background, click-to-close
+
+**Responsive Design**:
+- Desktop (>768px): Windowed modal with rounded corners
+- Mobile (≤768px): Full-screen (100vw × 100vh)
+- Header adjusts: Flexbox layout stacks on mobile
+
+**Accessibility**:
+- Close button has aria-label
+- Backdrop has aria-hidden="true"
+- Keyboard navigation supported by Excalidraw
+
+### Excalidraw Configuration
+
+**UIOptions**:
+- Canvas actions enabled: Background color, clear canvas
+- Canvas actions disabled: Export, save, theme, load scene
+- Tools disabled: Image import (simplified for MVP)
+- Default tools: Pen, selection, shapes (rectangle, circle, arrow), text, eraser
+
+**Why These Choices**:
+- Enable: Essential drawing and editing tools
+- Disable: Export/import features that add complexity
+- Keep UI minimal to avoid overwhelming students
+- Focus on core use case: visual problem solving
+
+### Performance Considerations
+
+**Bundle Size**:
+- Excalidraw adds ~222 packages
+- Uncompressed: ~2-3MB
+- Gzipped: ~500KB
+- Acceptable for stretch feature
+- Lazy-loaded only when used (conditional render)
+
+**Rendering**:
+- Excalidraw uses Canvas API (hardware accelerated)
+- Smooth drawing performance on modern devices
+- State changes throttled by Excalidraw internally
+
+### Use Cases
+
+**Geometry Problems**:
+- "Draw a triangle with sides 3-4-5"
+- "What's the area of this rectangle?" (draw it)
+- Visual angle calculations
+
+**Graphing**:
+- Plot coordinates
+- Sketch function shapes
+- Visual transformations
+
+**Visual Explanations**:
+- Fraction diagrams (pie charts, bars)
+- Number lines for integer operations
+- Algebra balance scales
+
+### Future Enhancements (Not Implemented)
+
+**Could Add Later**:
+- Backend storage (persist across sessions)
+- Tutor drawing capability (collaborative whiteboard)
+- Image export (save diagram as PNG)
+- Problem-specific templates (pre-drawn grids, axes, shapes)
+- Multi-page canvas (separate boards per problem)
 
 **Documented**: 2025-11-04

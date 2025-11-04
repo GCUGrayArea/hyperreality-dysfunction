@@ -1,7 +1,7 @@
 # Technical Context
 
-**Last Updated**: 2025-11-03 (PR-001)
-**Status**: Foundation established
+**Last Updated**: 2025-11-04 (PR-012)
+**Status**: Stretch feature - Whiteboard added
 **Updated By**: Agent White
 
 ## Tech Stack
@@ -18,6 +18,14 @@
   - **Rationale**: Faster than MathJax (~300KB vs ~1MB), synchronous rendering, better for interactive apps
   - **Syntax**: Supports inline `$...$` and block `$$...$$` LaTeX delimiters
   - **Location**: `src/utils/latexRenderer.js` (parsing/rendering), integrated in Message component
+- **Interactive Whiteboard**: Excalidraw (PR-012 - Stretch Feature)
+  - **Package**: @excalidraw/excalidraw
+  - **Version**: Latest (added 222 packages)
+  - **Rationale**: Most full-featured whiteboard library, easy integration, includes all drawing tools
+  - **Features**: Pen, shapes (rectangle, circle, arrow), text, undo/redo, clear canvas
+  - **Integration**: Overlay modal with backdrop, toggle button in header
+  - **State Persistence**: Canvas state stored in Chat component, restored when reopened
+  - **Location**: `src/components/Whiteboard.jsx`, integrated in Chat component
 - **State Management**: React built-in (useState, useContext) for now
   - **Note**: May add Zustand if complexity increases
 
@@ -125,6 +133,7 @@
 - `react-dom@^19.1.1` - React DOM rendering
 - `openai@^6.7.0` - OpenAI API client (added in PR-002)
 - `katex@latest` - Math rendering library (added in PR-007)
+- `@excalidraw/excalidraw@latest` - Interactive whiteboard library (added in PR-012)
 
 ### Dev Dependencies
 - `vite@^7.1.7` - Build tool and dev server
@@ -193,3 +202,20 @@ Update this file when:
   - **Display**: Failed LaTeX shows in red with error styling, doesn't break UI
 - **Security**: `trust: false` in KaTeX config disables potentially dangerous commands like `\href`
 - **Integration Point**: Message component only (no changes to LLM integration needed)
+
+### PR-012 Decisions Made (2025-11-04) - Stretch Feature
+- **Whiteboard Library**: Excalidraw (chosen for completeness and ease of use)
+  - **Rationale**: Most full-featured option, includes all drawing tools out of the box, great UX
+  - **Alternatives considered**: Fabric.js (too low-level), plain HTML5 Canvas (too much work)
+- **UI Pattern**: Overlay modal with backdrop
+  - **Toggle Button**: Located in header (desktop) or full-width (mobile)
+  - **Backdrop**: Click-to-close on darkened background
+  - **Fixed Position**: Centers on screen, responsive sizing (90vw x 85vh)
+- **State Management**: Canvas data stored in Chat component state
+  - **Persistence**: Canvas persists across open/close within same session
+  - **No backend**: State lives in memory only (resets on page refresh)
+- **Tool Configuration**: Minimal UI mode
+  - **Enabled**: Pen, shapes (rectangle, circle, arrow), text, undo/redo, clear canvas
+  - **Disabled**: Image import, export, theme switching (simplified for MVP)
+- **Responsive Design**: Full-screen on mobile (<768px), windowed on desktop
+- **Bundle Size Impact**: ~222 packages added (~2-3MB uncompressed, ~500KB gzipped)
