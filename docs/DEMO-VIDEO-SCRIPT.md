@@ -1,7 +1,7 @@
 # Demo Video Script - AI Math Tutor
 
 **Target Length:** 5 minutes
-**Production URL:** https://math-tutor-go4eke7pc-grays-projects-783dc481.vercel.app
+**Production URL:** https://math-tutor-jneff90za-grays-projects-783dc481.vercel.app (Full features on Vercel Pro)
 
 ---
 
@@ -113,7 +113,37 @@
 
 ---
 
-### 5. Math Rendering Showcase (30 seconds)
+### 5. Interactive Whiteboard (45 seconds)
+
+**Script:**
+> "The app also includes an interactive whiteboard for visual problem solving - perfect for geometry and graphing."
+
+**Actions:**
+1. Click "📐 Whiteboard" button in header
+2. Draw a triangle with labeled sides (3, 4, 5)
+3. Use shapes tool to add a rectangle
+4. Demonstrate zoom (mouse wheel)
+5. Pan around canvas (spacebar + drag or hand tool)
+6. Close whiteboard
+7. Reopen - show drawing persists
+
+**Script during demo:**
+> "This is powered by Excalidraw, giving you a full-featured drawing canvas. You can sketch geometry problems, graph functions, or visualize concepts. The canvas persists while you work through problems with the tutor.
+>
+> Note the guidance at the top - the tutor can't read the canvas directly, but it's a perfect visual workspace while you type questions to the tutor."
+
+**Highlight:**
+- Full drawing tools (pen, shapes, text)
+- Zoom and pan
+- State persistence
+- Professional canvas feel
+
+**Important note for recording:**
+> "This whiteboard feature is fully functional in the production deployment. With Vercel Pro, the larger bundle size is not an issue, so you can test the complete interactive whiteboard right in the live demo!"
+
+---
+
+### 6. Math Rendering Showcase (30 seconds)
 
 **Script:**
 > "The tutor uses KaTeX for beautiful math rendering. Let me show a problem with complex notation."
@@ -134,7 +164,7 @@
 
 ---
 
-### 6. Error Handling Demo (30 seconds)
+### 7. Error Handling Demo (30 seconds)
 
 **Script:**
 > "The system also has robust error handling. Let me show what happens if there's an issue."
@@ -152,7 +182,7 @@
 
 ---
 
-### 7. Responsive Design (15 seconds)
+### 8. Responsive Design (15 seconds)
 
 **Script:**
 > "The app is fully responsive and works on desktop, tablet, and mobile."
@@ -163,19 +193,20 @@
 
 ---
 
-### 8. Wrap-up (30 seconds)
+### 9. Wrap-up (45 seconds)
 
 **Script:**
 > "To recap, the AI Math Tutor:
 > - Uses the Socratic method to guide students through problems
 > - Supports both text and image input
-> - Renders beautiful math equations
+> - Features an interactive whiteboard for visual problem solving
+> - Renders beautiful math equations with KaTeX
 > - Works across 8+ problem types from algebra to calculus
 > - Never gives direct answers, helping students truly learn
 >
-> The app is deployed on Vercel with secure API key handling via serverless functions.
+> The full application is deployed on Vercel Pro with secure API key handling via serverless functions. You can try all features, including the interactive whiteboard, live at the link in the description.
 >
-> You can try it yourself at the link in the description, or deploy your own instance following the deployment guide.
+> This project demonstrates how AI can transform math education through Socratic dialogue, and with modern deployment platforms, we can deliver rich, interactive experiences without compromise.
 >
 > Thanks for watching!"
 

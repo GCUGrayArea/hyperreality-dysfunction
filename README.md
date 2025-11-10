@@ -24,9 +24,9 @@ An AI-powered math tutor that uses the Socratic method to guide students through
 
 ## Live Demo
 
-🚀 **Production URL**: https://math-tutor-go4eke7pc-grays-projects-783dc481.vercel.app
+🚀 **Production URL**: https://math-tutor-jneff90za-grays-projects-783dc481.vercel.app
 
-Try it now - no API key required!
+**Full feature set deployed on Vercel Pro** - includes interactive whiteboard, Socratic dialogue, image upload, and math rendering. Try it now - no API key required!
 
 ## Tech Stack
 
@@ -118,31 +118,23 @@ The tutor has been validated on:
 
 ## Deployment
 
-### Whiteboard Bundle Size Considerations
+### Current Production Deployment
 
-The interactive whiteboard feature (PR-012) is fully functional and available in the codebase, but adds approximately **2MB to the bundle size** due to the Excalidraw library.
+The application is deployed on **Vercel Pro** with **full feature support** including the interactive whiteboard. All features are available in the live production environment.
 
-**Deployment Options:**
+**Live Production (Vercel Pro):**
+- ✅ Full feature set deployed (all 11 core PRs + whiteboard)
+- ✅ Socratic dialogue, image upload, calculator, math rendering
+- ✅ Interactive whiteboard with Excalidraw (~2MB bundle)
+- ✅ Live at: https://math-tutor-jneff90za-grays-projects-783dc481.vercel.app
 
-1. **Vercel Free Tier (Current Production)**
-   - Core MVP deployed without whiteboard
-   - All 11 core PRs functional (Socratic dialogue, image upload, calculator, etc.)
-   - Live at: https://math-tutor-go4eke7pc-grays-projects-783dc481.vercel.app
+**Local Development:**
+- Run `vercel dev --listen 3000` to test locally
+- All features available including whiteboard
+- Perfect for testing and development
 
-2. **Local Development with Full Features**
-   - Whiteboard fully functional when running `vercel dev --listen 3000`
-   - Perfect for testing, demo videos, and personal use
-   - Complete feature set available
-
-3. **Self-Hosted / Upgraded Hosting**
-   - Deploy to services without strict bundle size limits
-   - Vercel Pro ($20/month) supports larger bundles
-   - Alternative platforms (Netlify, Railway, etc.)
-
-**To deploy with whiteboard:**
-- Upgrade to Vercel Pro, or
-- Use alternative hosting platform with higher limits, or
-- Clone repo and run locally with `vercel dev`
+**Note about Bundle Size:**
+The Excalidraw whiteboard adds ~2MB to the bundle. This works seamlessly on Vercel Pro. If deploying on free-tier hosting, you may need to either upgrade or use alternative platforms like Netlify or Railway that support larger bundles.
 
 ### Deploy Your Own Instance (Core MVP)
 
@@ -370,7 +362,6 @@ Note: Costs may vary based on conversation length and problem complexity.
 2. **Image Quality**: Handwritten problems may have lower OCR accuracy than printed text
 3. **Advanced Math**: System validated on K-12 and early college math; advanced topics may need prompt refinement
 4. **Calculator Limitations**: Safe expression parser supports basic arithmetic only (no symbolic algebra)
-5. **Whiteboard Bundle Size**: Excalidraw adds ~2MB to bundle, exceeding Vercel free tier limits (see Deployment section)
 
 ## Future Improvements
 
